@@ -1,0 +1,157 @@
+{
+  "projectType": "saas",
+  "projectName": "App Courier",
+  "projectDescription": "A comprehensive Flutter-based courier and package delivery management system for admins, customers, and drivers.",
+  "theme": "palm",
+  "primaryColor": "#3dcffc",
+  "lightColor": "#0b5b9c",
+  "darkColor": "#ffffff",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/package-management",
+              "features/customer-management",
+              "features/delivery-tracking",
+              "features/pricing-calculator",
+              "features/user-roles"
+            ]
+          },
+          {
+            "group": "User Guides",
+            "pages": [
+              "guides/admin-guide",
+              "guides/customer-guide",
+              "guides/driver-guide"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/environment",
+              "configuration/api-setup",
+              "configuration/permissions"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Authentication",
+            "pages": [
+              "api/auth/login",
+              "api/auth/register",
+              "api/auth/password-recovery"
+            ]
+          },
+          {
+            "group": "Package Management",
+            "pages": [
+              "api/packages/create",
+              "api/packages/track",
+              "api/packages/status",
+              "api/packages/pricing"
+            ]
+          },
+          {
+            "group": "Customer Management",
+            "pages": [
+              "api/customers/list",
+              "api/customers/create",
+              "api/customers/update"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "api/config/locations",
+              "api/config/branches",
+              "api/config/settings"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Architecture",
+            "pages": [
+              "development/architecture",
+              "development/state-management",
+              "development/folder-structure"
+            ]
+          },
+          {
+            "group": "Models",
+            "pages": [
+              "development/models/encomienda",
+              "development/models/customer",
+              "development/models/motorizado"
+            ]
+          },
+          {
+            "group": "Services",
+            "pages": [
+              "development/services/overview",
+              "development/services/api-client"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Multi-role user authentication (Admin, Customer, Driver)",
+    "Package tracking and status management",
+    "Customer and address management",
+    "Real-time delivery assignment to drivers",
+    "Automated pricing calculation",
+    "PDF report generation and printing",
+    "Branch and coverage area management",
+    "Dashboard analytics and metrics",
+    "Mobile-first Flutter application",
+    "Shipment request system for customers"
+  ],
+  "publicApiSurface": [
+    "POST /auth/login",
+    "POST /auth/loginCliente",
+    "POST /auth/clienteRegister",
+    "POST /auth/clienteValidarCodigoRegistro",
+    "POST /auth/clienteRecuperar",
+    "POST /auth/clienteCambiarContrasena",
+    "GET /sucursales/getSucursales",
+    "GET /clientes/getClientes",
+    "POST /clientes/createCliente",
+    "PUT /clientes/updateCliente",
+    "GET /encomienda/getEncomiendas",
+    "POST /encomienda/createEncomienda",
+    "POST /encomienda/calcularPrecio",
+    "GET /encomienda/getHistorialEstados",
+    "POST /encomienda/addEstadoEncomienda",
+    "POST /encomienda/addMotorizados",
+    "GET /encomienda/getMotorizados",
+    "POST /solicitudesapp/createSolicitudesApp",
+    "GET /solicitudesapp/getSolicitudesApp",
+    "GET /configuraciones/getDepartamentos",
+    "GET /configuraciones/getProvincias",
+    "GET /configuraciones/getDistritos",
+    "GET /configuraciones/getTiposPago",
+    "GET /configuraciones/getPlanes",
+    "GET /usuarios/getMotorizados"
+  ]
+}
