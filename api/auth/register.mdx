@@ -9,7 +9,7 @@ Initiate the customer registration process. This endpoint sends a verification c
 
 <CodeGroup>
 ```bash cURL
-curl -X POST https://api.appcourier.com/auth/clienteRegister \
+curl -X POST https://api.eisegmi.facturador.es/auth/clienteRegister \
   -H "Content-Type: application/json" \
   -d '{
     "nombres": "Juan Pérez",
@@ -68,7 +68,7 @@ Verify the customer's email address using the code sent during registration.
 
 <CodeGroup>
 ```bash cURL
-curl -X POST https://api.appcourier.com/auth/clienteValidarCodigoRegistro \
+curl -X POST https://api.eisegmi.facturador.es/auth/clienteValidarCodigoRegistro \
   -H "Content-Type: application/json" \
   -d '{
     "email": "juan.perez@example.com",
@@ -123,7 +123,7 @@ After email verification, complete the customer profile with additional details.
 
 <CodeGroup>
 ```bash cURL
-curl -X POST https://api.appcourier.com/auth/clienteCrear \
+curl -X POST https://api.eisegmi.facturador.es/auth/clienteCrear \
   -H "Content-Type: application/json" \
   -d '{
     "numero_documento": "12345678",

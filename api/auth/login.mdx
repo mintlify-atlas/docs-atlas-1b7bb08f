@@ -9,7 +9,7 @@ Authenticate admin or staff users to access the App Courier admin panel.
 
 <CodeGroup>
 ```bash cURL
-curl -X POST https://api.appcourier.com/auth/login \
+curl -X POST https://api.eisegmi.facturador.es/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@appcourier.com",
@@ -128,7 +128,7 @@ Authenticate customer users to access their App Courier account and track shipme
 
 <CodeGroup>
 ```bash cURL
-curl -X POST https://api.appcourier.com/auth/loginCliente \
+curl -X POST https://api.eisegmi.facturador.es/auth/loginCliente \
   -H "Content-Type: application/json" \
   -d '{
     "usuario": "cliente@example.com",
@@ -234,7 +234,7 @@ final response = await api.post(
 After successful login, include the authentication token in subsequent API requests:
 
 ```bash
-curl -X GET https://api.appcourier.com/encomienda/getEncomiendas \
+curl -X GET https://api.eisegmi.facturador.es/encomienda/getEncomiendas \
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
