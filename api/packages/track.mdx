@@ -1,0 +1,270 @@
+---
+title: 'Track Package'
+description: 'Retrieve package information by remito number or get a list of packages'
+---
+
+## Get Package by Remito Number
+
+Retrieve detailed information about a specific package using its remito (tracking) number.
+
+### Endpoint
+
+<ParamField path="method" type="string" default="GET">
+  GET
+</ParamField>
+
+<ParamField path="endpoint" type="string">
+  `/encomienda/getEncomiendaByRemito`
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="id_remitente" type="integer" required>
+  Sender's customer ID
+</ParamField>
+
+<ParamField query="remito" type="string" required>
+  Remito (tracking) number
+</ParamField>
+
+### Response
+
+<ResponseField name="data" type="object">
+  Package information object
+
+  <ResponseField name="id" type="string">
+    Package ID
+  </ResponseField>
+
+  <ResponseField name="serie_remito" type="string">
+    Remito/tracking number
+  </ResponseField>
+
+  <ResponseField name="agencia_origen" type="string">
+    Origin branch/agency name
+  </ResponseField>
+
+  <ResponseField name="agencia_destino" type="string">
+    Destination branch/agency name
+  </ResponseField>
+
+  <ResponseField name="remitente_nombre" type="string">
+    Sender's full name
+  </ResponseField>
+
+  <ResponseField name="remitente_documento" type="string">
+    Sender's document number
+  </ResponseField>
+
+  <ResponseField name="remitente_direccion" type="string">
+    Sender's address
+  </ResponseField>
+
+  <ResponseField name="celularremitente" type="string">
+    Sender's phone number
+  </ResponseField>
+
+  <ResponseField name="destinatario_nombre" type="string">
+    Recipient's full name
+  </ResponseField>
+
+  <ResponseField name="destinatario_documento" type="string">
+    Recipient's document number
+  </ResponseField>
+
+  <ResponseField name="destinatario_direccion" type="string">
+    Recipient's delivery address
+  </ResponseField>
+
+  <ResponseField name="celulardestino" type="string">
+    Recipient's phone number
+  </ResponseField>
+
+  <ResponseField name="tipo_pago" type="string">
+    Payment type
+  </ResponseField>
+
+  <ResponseField name="tipo_entrega" type="string">
+    Delivery type
+  </ResponseField>
+
+  <ResponseField name="tipo_envio" type="string">
+    Shipping type
+  </ResponseField>
+
+  <ResponseField name="costo_total" type="string">
+    Total cost
+  </ResponseField>
+
+  <ResponseField name="kg" type="string">
+    Weight in kilograms
+  </ResponseField>
+
+  <ResponseField name="fecha" type="string">
+    Creation date
+  </ResponseField>
+
+  <ResponseField name="fecha_entrega" type="string">
+    Expected delivery date
+  </ResponseField>
+
+  <ResponseField name="cantidad" type="string">
+    Number of items
+  </ResponseField>
+
+  <ResponseField name="medio" type="string">
+    Shipping method/medium
+  </ResponseField>
+
+  <ResponseField name="observacion" type="string">
+    Observations or notes
+  </ResponseField>
+
+  <ResponseField name="ultimo_estado" type="string">
+    Current status description
+  </ResponseField>
+
+  <ResponseField name="color_estado" type="string">
+    Status color code
+  </ResponseField>
+
+  <ResponseField name="motorizado" type="string">
+    Assigned delivery driver name
+  </ResponseField>
+
+  <ResponseField name="cantidad_total" type="integer">
+    Total quantity
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Error message if package not found
+</ResponseField>
+
+### Request Example
+
+```bash
+GET /encomienda/getEncomiendaByRemito?id_remitente=123&remito=RM-2026-001
+```
+
+### Response Example
+
+```json
+{
+  "data": {
+    "id": "1",
+    "serie_remito": "RM-2026-001",
+    "agencia_origen": "Lima Centro",
+    "agencia_destino": "Arequipa Norte",
+    "remitente_nombre": "Juan Pérez",
+    "remitente_documento": "12345678",
+    "remitente_direccion": "Av. Principal 123",
+    "celularremitente": "987654321",
+    "destinatario_nombre": "María García",
+    "destinatario_documento": "87654321",
+    "destinatario_direccion": "Jr. Los Olivos 456",
+    "celulardestino": "912345678",
+    "tipo_pago": "Efectivo",
+    "tipo_entrega": "Domicilio",
+    "tipo_envio": "Express",
+    "costo_total": "50.00",
+    "kg": "5.5",
+    "fecha": "2026-03-05",
+    "fecha_entrega": "2026-03-10",
+    "cantidad": "2",
+    "medio": "Terrestre",
+    "observacion": "Fragile items",
+    "ultimo_estado": "En tránsito",
+    "color_estado": "#FFA500",
+    "motorizado": "Carlos Rodríguez",
+    "cantidad_total": 2
+  }
+}
+```
+
+---
+
+## Get List of Packages
+
+Retrieve a list of packages filtered by branch and date range.
+
+### Endpoint
+
+<ParamField path="method" type="string" default="GET">
+  GET
+</ParamField>
+
+<ParamField path="endpoint" type="string">
+  `/encomienda/getEncomiendas`
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="id_sucursal" type="integer" required>
+  Branch/agency ID
+</ParamField>
+
+<ParamField query="fecha_inicio" type="string" required>
+  Start date (YYYY-MM-DD format)
+</ParamField>
+
+<ParamField query="fecha_fin" type="string" required>
+  End date (YYYY-MM-DD format)
+</ParamField>
+
+<ParamField query="id_motorizado" type="integer">
+  Optional: Filter by delivery driver ID
+</ParamField>
+
+### Response
+
+<ResponseField name="data" type="array">
+  Array of package objects (same structure as single package response)
+</ResponseField>
+
+### Request Example
+
+```bash
+GET /encomienda/getEncomiendas?id_sucursal=1&fecha_inicio=2026-03-01&fecha_fin=2026-03-31
+```
+
+### Response Example
+
+```json
+{
+  "data": [
+    {
+      "id": "1",
+      "serie_remito": "RM-2026-001",
+      "agencia_origen": "Lima Centro",
+      "agencia_destino": "Arequipa Norte",
+      "remitente_nombre": "Juan Pérez",
+      "destinatario_nombre": "María García",
+      "costo_total": "50.00",
+      "ultimo_estado": "En tránsito",
+      "fecha": "2026-03-05"
+    },
+    {
+      "id": "2",
+      "serie_remito": "RM-2026-002",
+      "agencia_origen": "Lima Centro",
+      "agencia_destino": "Cusco",
+      "remitente_nombre": "Ana López",
+      "destinatario_nombre": "Pedro Sánchez",
+      "costo_total": "75.00",
+      "ultimo_estado": "Entregado",
+      "fecha": "2026-03-04"
+    }
+  ]
+}
+```
+
+## Error Response
+
+When a package is not found:
+
+```json
+{
+  "message": "No se encontró encomienda"
+}
+```

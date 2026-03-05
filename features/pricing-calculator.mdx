@@ -1,0 +1,369 @@
+---
+title: "Pricing Calculator"
+description: "Automated shipping cost calculation based on distance, weight, delivery type, and customer pricing plans"
+---
+
+## Overview
+
+App Courier includes a sophisticated pricing calculator that automatically determines shipping costs based on multiple factors including distance, weight, delivery type, and customer-specific pricing plans.
+
+## Pricing Factors
+
+Shipping cost is calculated using these components:
+
+<CardGroup cols={2}>
+  <Card title="Distance" icon="route">
+    Distance between origin and destination districts
+  </Card>
+  <Card title="Weight" icon="weight-scale">
+    Package weight in kilograms
+  </Card>
+  <Card title="Delivery Type" icon="truck">
+    Agency-to-agency, home delivery, or door-to-door
+  </Card>
+  <Card title="Customer Plan" icon="file-invoice">
+    Customer's assigned pricing plan with custom rates
+  </Card>
+</CardGroup>
+
+## How Pricing Works
+
+### Base Price Calculation
+
+The base price is determined by the customer's pricing plan:
+
+```dart
+class Plan {
+  int? id;
+  String? descripcion;      // Plan name
+  String? tarifa_km_0_50;   // Rate for 0-50 km
+  String? tarifa_km_50_100; // Rate for 50-100 km  
+  String? tarifa_km_100;    // Rate for 100+ km
+  String? tarifa_min_0_50;  // Minimum charge 0-50 km
+  String? tarifa_min_50_100;// Minimum charge 50-100 km
+  String? tarifa_min_100;   // Minimum charge 100+ km
+}
+```
+
+### Distance Tiers
+
+1. **0-50 km**: Short distance
+   - Uses `tarifa_km_0_50` per kg
+   - Minimum charge: `tarifa_min_0_50`
+
+2. **50-100 km**: Medium distance
+   - Uses `tarifa_km_50_100` per kg
+   - Minimum charge: `tarifa_min_50_100`
+
+3. **100+ km**: Long distance
+   - Uses `tarifa_km_100` per kg
+   - Minimum charge: `tarifa_min_100`
+
+### Additional Charges
+
+<Tabs>
+  <Tab title="Home Pickup">
+    **Extra Domicilio → Agencia**
+    
+    Additional fee when driver picks up from sender's address:
+    ```dart
+customer.extraDomAge  // Additional charge
+    ```
+  </Tab>
+  
+  <Tab title="Home Delivery">
+    **Extra Agencia → Domicilio**
+    
+    Additional fee when driver delivers to recipient's address:
+    ```dart
+customer.extraAgeDom  // Additional charge
+    ```
+  </Tab>
+  
+  <Tab title="Door-to-Door">
+    **Extra Domicilio → Domicilio**
+    
+    Additional fee for complete door-to-door service:
+    ```dart
+customer.extraDomDom  // Additional charge
+// OR sum of both extras
+extraDomAge + extraAgeDom
+    ```
+  </Tab>
+</Tabs>
+
+### IGV (Tax)
+
+For business customers, 18% IGV may be added:
+
+```dart
+if (customer.igv == 1) {
+  totalWithIGV = subtotal * 1.18;
+}
+```
+
+## Price Calculation API
+
+Calculate shipping costs programmatically:
+
+### Endpoint
+
+```
+POST /encomienda/calcularPrecio
+```
+
+### Request Parameters
+
+<ParamField path="id_distrito_origen" type="integer" required>
+  Origin district ID
+</ParamField>
+
+<ParamField path="id_distrito_destino" type="integer" required>
+  Destination district ID
+</ParamField>
+
+<ParamField path="kilos" type="number" required>
+  Package weight in kilograms
+</ParamField>
+
+<ParamField path="id_plan" type="integer" required>
+  Customer's pricing plan ID
+</ParamField>
+
+<ParamField path="tipo_entrega" type="string" required>
+  Delivery type:
+  - "Sucursal - Sucursal"
+  - "Domicilio - Sucursal" 
+  - "Sucursal - Domicilio"
+  - "Domicilio - Domicilio"
+</ParamField>
+
+<ParamField path="igv" type="integer" required>
+  Include IGV: 1 = yes, 0 = no
+</ParamField>
+
+<ParamField path="extra_dom_age" type="number">
+  Extra charge for home pickup
+</ParamField>
+
+<ParamField path="extra_age_dom" type="number">
+  Extra charge for home delivery
+</ParamField>
+
+<ParamField path="extra_dom_dom" type="number">
+  Extra charge for door-to-door
+</ParamField>
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "precio_base": "25.00",
+    "precio_extra": "5.00",
+    "precio_movilidad": "30.00",
+    "precio_minimo": "15.00",
+    "precio_total": "30.00",
+    "precio_total_igv": "35.40",
+    "km": "45"
+  }
+}
+```
+
+### Response Fields
+
+<ResponseField name="precio_base" type="string">
+  Base shipping price (distance × weight × rate)
+</ResponseField>
+
+<ResponseField name="precio_extra" type="string">
+  Additional delivery charges (home pickup/delivery)
+</ResponseField>
+
+<ResponseField name="precio_movilidad" type="string">
+  Total mobility/transport cost (base + extra)
+</ResponseField>
+
+<ResponseField name="precio_minimo" type="string">
+  Minimum charge for this distance tier
+</ResponseField>
+
+<ResponseField name="precio_total" type="string">
+  Final price (maximum of precio_movilidad or precio_minimo)
+</ResponseField>
+
+<ResponseField name="precio_total_igv" type="string">
+  Final price including 18% IGV tax (if applicable)
+</ResponseField>
+
+<ResponseField name="km" type="string">
+  Distance in kilometers between districts
+</ResponseField>
+
+## Pricing Examples
+
+### Example 1: Simple Agency-to-Agency
+
+```dart
+Origin: Lima (District 1)
+Destination: Callao (District 50)
+Distance: 35 km
+Weight: 2 kg
+Delivery: Sucursal - Sucursal
+Plan: Standard (tarifa_km_0_50 = S/ 5.00/kg, min = S/ 15.00)
+
+Calculation:
+Base: 2 kg × S/ 5.00 = S/ 10.00
+Extras: S/ 0.00 (no home delivery)
+Minimum: S/ 15.00
+Final: S/ 15.00 (minimum applies)
+```
+
+### Example 2: Door-to-Door with IGV
+
+```dart
+Origin: Arequipa (District 100)
+Destination: Cusco (District 200)  
+Distance: 320 km
+Weight: 5 kg
+Delivery: Domicilio - Domicilio
+Plan: Premium (tarifa_km_100 = S/ 8.00/kg, min = S/ 50.00)
+Extras: extraDomDom = S/ 15.00
+IGV: Yes
+
+Calculation:
+Base: 5 kg × S/ 8.00 = S/ 40.00
+Extras: S/ 15.00
+Subtotal: S/ 55.00
+Minimum: S/ 50.00
+Before IGV: S/ 55.00 (subtotal > minimum)
+With IGV: S/ 55.00 × 1.18 = S/ 64.90
+```
+
+## Price Display in UI
+
+When creating packages, price is calculated automatically:
+
+<Steps>
+  <Step title="Select Origin & Destination">
+    Choose districts for origin and destination
+  </Step>
+  
+  <Step title="Enter Weight">
+    Input package weight in kg
+  </Step>
+  
+  <Step title="Choose Delivery Type">
+    Select delivery type (affects extra charges)
+  </Step>
+  
+  <Step title="Auto-Calculate">
+    System calls pricing API and displays total cost
+  </Step>
+  
+  <Step title="Review Breakdown">
+    See price components:
+    - Base shipping cost
+    - Extra delivery charges  
+    - IGV (if applicable)
+    - Total cost
+  </Step>
+</Steps>
+
+## Custom Pricing Plans
+
+Business customers can have custom pricing plans:
+
+### Creating Custom Plans
+
+<Note>
+  Custom plans are typically created by system administrators and assigned to high-volume business customers.
+</Note>
+
+1. Define plan name and description
+2. Set rates for each distance tier
+3. Set minimum charges per tier
+4. Assign plan to customer
+5. Customer automatically uses new plan for all shipments
+
+### Plan Management
+
+Administrators can:
+- Create new pricing plans
+- Modify existing plans
+- Assign plans to customers
+- View plan usage and revenue
+
+## Minimum Charges
+
+Every distance tier has a minimum charge:
+
+<Warning>
+  If calculated price is below minimum, the minimum charge is applied automatically.
+</Warning>
+
+Example:
+```dart
+Calculated: S/ 8.00
+Minimum: S/ 15.00
+Actual Charge: S/ 15.00  // Minimum applies
+```
+
+This ensures:
+- Coverage of operational costs
+- Fair pricing for short distances
+- Consistent minimum revenue per package
+
+## Volume Discounts
+
+While not explicitly in the pricing model, volume customers can receive:
+- Custom pricing plans with reduced rates
+- Lower extra delivery charges
+- Reduced minimum charges
+- Special negotiated rates
+
+<Tip>
+  Contact administrators to set up volume discount pricing for high-volume business customers.
+</Tip>
+
+## Integration
+
+Pricing calculator integrates with:
+
+- **Package Creation**: Auto-calculate during package creation
+- **Customer Management**: Uses customer's assigned plan
+- **Branch Management**: Calculates distance between districts
+- **Invoicing**: Generates correct invoice amounts
+- **Reporting**: Revenue projections and analysis
+
+## API Reference
+
+<CardGroup cols={2}>
+  <Card title="Calculate Price" icon="calculator" href="/api/packages/pricing">
+    POST /encomienda/calcularPrecio
+  </Card>
+  <Card title="Get Plans" icon="list" href="/api/config/settings">
+    GET /configuraciones/getPlanes
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+<Tip>
+  **Verify weight accuracy**: Accurate weight is crucial for correct pricing. Use calibrated scales.
+</Tip>
+
+<Note>
+  **Explain pricing to customers**: Be transparent about price breakdown including base cost, extras, and IGV.
+</Note>
+
+<Warning>
+  **Update plans carefully**: Changes to pricing plans affect all future shipments for customers using that plan.
+</Warning>
+
+## See Also
+
+- [Package Management](/features/package-management)
+- [Customer Management](/features/customer-management)
+- [API: Calculate Pricing](/api/packages/pricing)

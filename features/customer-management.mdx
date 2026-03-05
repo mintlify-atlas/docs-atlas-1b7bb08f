@@ -1,0 +1,343 @@
+---
+title: "Customer Management"
+description: "Manage customer profiles, addresses, pricing plans, and business relationships"
+---
+
+## Overview
+
+App Courier's customer management system handles both individual customers (Natural) and business customers (Jurídico). The system maintains customer profiles, multiple delivery addresses, pricing plans, and payment preferences.
+
+## Customer Types
+
+<Tabs>
+  <Tab title="Natural Person">
+    **Individual Customers**
+    
+    - Personal customers sending/receiving packages
+    - Identified by DNI (national ID)
+    - Simple profile with basic information
+    - Standard pricing applies
+    - Cash or credit payment options
+  </Tab>
+  
+  <Tab title="Jurídico (Business)">
+    **Business Customers**
+    
+    - Companies and organizations
+    - Identified by RUC (tax ID)
+    - Extended profile with business configuration
+    - Custom pricing plans available
+    - Credit terms and invoicing
+    - IGV (tax) configuration
+    - Volume discounts
+  </Tab>
+</Tabs>
+
+## Customer Profile Structure
+
+Each customer profile contains:
+
+### Basic Information
+
+- **Document Number**: DNI (8 digits) or RUC (11 digits)
+- **Full Name**: Customer name or business name (razón social)
+- **Phone**: Contact phone number
+- **Email**: Email address (for app customers)
+- **Location**: Department, Province, District
+
+### Business Configuration (Jurídico only)
+
+<AccordionGroup>
+  <Accordion title="Customer Type">
+    - **Natural**: Individual person
+    - **Jurídico**: Business/company
+  </Accordion>
+  
+  <Accordion title="Payment Type">
+    - **Contado**: Cash on delivery
+    - **Crédito**: Credit terms (invoicing)
+  </Accordion>
+  
+  <Accordion title="IGV Configuration">
+    - **Include IGV**: Add 18% tax to shipments
+    - **Exclude IGV**: No tax added
+    - Configurable per customer
+  </Accordion>
+  
+  <Accordion title="Pricing Plan">
+    - Default plan or custom plan
+    - Defines base rates per distance
+    - Volume discounts
+    - Minimum thresholds
+  </Accordion>
+  
+  <Accordion title="Extra Charges">
+    Additional delivery fees:
+    - **extraDomDom**: Door-to-door delivery
+    - **extraAgeDom**: Agency to home
+    - **extraDomAge**: Home to agency
+  </Accordion>
+</AccordionGroup>
+
+## Managing Customer Addresses
+
+Customers can have multiple delivery addresses stored in their profile.
+
+### Address Structure
+
+```dart
+class Direccion {
+  String? direccion;   // Street address
+  String? referencia;  // Landmark/reference
+}
+```
+
+### Adding Addresses
+
+<Steps>
+  <Step title="Open Customer Profile">
+    Navigate to the customer details page
+  </Step>
+  
+  <Step title="Click Add Address">
+    Select "Agregar Dirección" button
+  </Step>
+  
+  <Step title="Enter Address Details">
+    - Full street address
+    - Nearby landmark or reference
+    - District (if different from profile)
+  </Step>
+  
+  <Step title="Save Address">
+    Address is added to customer's address list
+  </Step>
+</Steps>
+
+<Tip>
+  Store frequently used addresses to speed up package creation. Include landmarks in the reference field.
+</Tip>
+
+## Creating Customers
+
+### Admin-Created Customers
+
+<Steps>
+  <Step title="Navigate to Customers">
+    From the admin panel, select "Clientes"
+  </Step>
+  
+  <Step title="Click New Customer">
+    Select "Nuevo Cliente" button
+  </Step>
+  
+  <Step title="Enter Document Number">
+    - For individuals: 8-digit DNI
+    - For businesses: 11-digit RUC
+    - System auto-fetches name from government API
+  </Step>
+  
+  <Step title="Verify Information">
+    Review auto-filled name and add missing details:
+    - Phone number
+    - Email (optional)
+    - Location (district)
+  </Step>
+  
+  <Step title="Configure Business Settings" optional>
+    For business customers:
+    - Select customer type (Jurídico)
+    - Choose payment type
+    - Set IGV preference
+    - Assign pricing plan
+    - Configure extra charges
+  </Step>
+  
+  <Step title="Add Addresses" optional>
+    Add delivery addresses for the customer
+  </Step>
+  
+  <Step title="Save Customer">
+    Customer is created and available for package creation
+  </Step>
+</Steps>
+
+### Self-Registration (Customer App)
+
+Customers can register themselves through the mobile app:
+
+<Steps>
+  <Step title="Download App">
+    Install App Courier from app store
+  </Step>
+  
+  <Step title="Register Account">
+    - Enter name and email
+    - Verify email with code
+    - Create password
+  </Step>
+  
+  <Step title="Complete Profile">
+    - Add document number
+    - Add phone number
+    - Select location
+    - Add delivery addresses
+  </Step>
+  
+  <Step title="Start Using">
+    Request shipments and track packages
+  </Step>
+</Steps>
+
+## Updating Customer Information
+
+<Note>
+  Customer information can be updated anytime. Changes are reflected immediately in all future packages.
+</Note>
+
+### Editable Fields
+
+- Contact information (phone, email)
+- Location (district)
+- Business configuration (for Jurídico)
+- Pricing plan
+- Payment preferences
+- Addresses
+
+### Protected Fields
+
+- Document number (cannot be changed)
+- Customer type (Natural/Jurídico)
+
+## Searching Customers
+
+Quickly find customers using:
+
+1. **Document Number**: Enter DNI or RUC
+2. **Name Search**: Type part of the customer name
+3. **Branch Filter**: View customers by branch
+4. **Type Filter**: Show only Natural or Jurídico customers
+
+```dart
+// Example: Search by document
+POST /clientes/buscarCliente
+{
+  "documento": "12345678",
+  "id_sucursal": 1
+}
+```
+
+## Customer Shipping History
+
+View complete shipping history for any customer:
+
+- All packages sent or received
+- Total shipment count
+- Revenue generated (for reports)
+- Frequent destinations
+- Payment history
+
+### Viewing History
+
+<Steps>
+  <Step title="Open Customer Profile">
+    Click on customer in the list
+  </Step>
+  
+  <Step title="Navigate to History">
+    Select "Historial de Envíos" tab
+  </Step>
+  
+  <Step title="Filter Results">
+    Filter by date range, status, or branch
+  </Step>
+  
+  <Step title="View Details">
+    Click any package to see full details
+  </Step>
+</Steps>
+
+## Pricing Plans
+
+Business customers can be assigned custom pricing plans.
+
+### Plan Components
+
+- **Base Rate**: Cost per kilometer or zone
+- **Minimum Charge**: Minimum shipment cost
+- **Weight Tiers**: Pricing based on weight ranges
+- **Discounts**: Volume or loyalty discounts
+
+### Assigning Plans
+
+1. Select customer profile
+2. Click "Edit" or "Editar Cliente"
+3. Choose plan from dropdown
+4. Save changes
+5. Plan applies to all future shipments
+
+<Warning>
+  Changing a customer's plan does not affect existing packages, only new shipments.
+</Warning>
+
+## Customer Types and Features
+
+| Feature | Natural | Jurídico |
+|---------|---------|----------|
+| Multiple Addresses | ✅ | ✅ |
+| Custom Pricing | ❌ | ✅ |
+| Credit Terms | Limited | ✅ |
+| IGV Configuration | ❌ | ✅ |
+| Volume Discounts | ❌ | ✅ |
+| Invoicing | Basic | Full |
+| Mobile App Access | ✅ | ✅ |
+
+## Integration
+
+Customer management integrates with:
+
+- **Package Creation**: Select customers when creating packages
+- **Pricing**: Customer plan affects shipment costs
+- **Invoicing**: Generate invoices for credit customers
+- **Reporting**: Customer analytics and revenue reports
+- **Mobile App**: Customers can track and request shipments
+
+## API Reference
+
+For programmatic customer management:
+
+<CardGroup cols={2}>
+  <Card title="List Customers" icon="list" href="/api/customers/list">
+    GET /clientes/getClientes
+  </Card>
+  <Card title="Create Customer" icon="plus" href="/api/customers/create">
+    POST /clientes/createCliente
+  </Card>
+  <Card title="Update Customer" icon="pen" href="/api/customers/update">
+    POST /clientes/updateCliente
+  </Card>
+  <Card title="Search Customer" icon="magnifying-glass" href="/api/customers/list">
+    GET /clientes/buscarCliente
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+<Tip>
+  **Verify documents with API**: Use the government API integration to auto-fill names from DNI/RUC numbers.
+</Tip>
+
+<Note>
+  **Maintain accurate addresses**: Encourage customers to keep addresses updated to avoid delivery issues.
+</Note>
+
+<Warning>
+  **Review business configuration**: Double-check IGV and pricing settings for business customers to ensure correct invoicing.
+</Warning>
+
+## See Also
+
+- [Package Management](/features/package-management)
+- [Pricing Calculator](/features/pricing-calculator)
+- [Customer Guide](/guides/customer-guide)
+- [API: Customer Management](/api/customers/list)

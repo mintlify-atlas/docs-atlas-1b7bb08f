@@ -1,0 +1,243 @@
+---
+title: "Login"
+description: "Authenticate admin users and customers to access App Courier services"
+---
+
+## Admin Login
+
+Authenticate admin or staff users to access the App Courier admin panel.
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.appcourier.com/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@appcourier.com",
+    "password": "your_password"
+  }'
+```
+
+```dart Dart
+final response = await api.post(
+  '/auth/login',
+  data: {
+    'email': 'admin@appcourier.com',
+    'password': 'your_password',
+  },
+);
+```
+</CodeGroup>
+
+### Request Body
+
+<ParamField body="email" type="string" required>
+  Admin user's email address
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Admin user's password
+</ParamField>
+
+### Response
+
+<ResponseField name="data" type="object">
+  <ResponseField name="exito" type="boolean">
+    Indicates if the login was successful
+  </ResponseField>
+  
+  <ResponseField name="token" type="string">
+    JWT authentication token for subsequent API requests
+  </ResponseField>
+  
+  <ResponseField name="id_usuario" type="integer">
+    Unique identifier for the authenticated user
+  </ResponseField>
+  
+  <ResponseField name="id_tipo_usuario" type="integer">
+    User type identifier (role ID)
+  </ResponseField>
+  
+  <ResponseField name="fullname" type="string">
+    Full name of the authenticated user
+  </ResponseField>
+  
+  <ResponseField name="id_sucursal" type="integer">
+    Branch/office ID associated with the user
+  </ResponseField>
+  
+  <ResponseField name="total_encomiendas_hoy" type="integer">
+    Total number of shipments processed today
+  </ResponseField>
+  
+  <ResponseField name="total_clientes" type="integer">
+    Total number of customers
+  </ResponseField>
+  
+  <ResponseField name="tipo_usuario" type="string">
+    User type name/description
+  </ResponseField>
+  
+  <ResponseField name="sucursal" type="string">
+    Branch/office name
+  </ResponseField>
+  
+  <ResponseField name="email" type="string">
+    User's email address
+  </ResponseField>
+  
+  <ResponseField name="direccion" type="string">
+    User's address
+  </ResponseField>
+</ResponseField>
+
+<ResponseExample>
+```json Success Response
+{
+  "data": {
+    "exito": true,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "id_usuario": 123,
+    "id_tipo_usuario": 1,
+    "fullname": "Juan Pérez",
+    "id_sucursal": 5,
+    "total_encomiendas_hoy": 42,
+    "total_clientes": 1250,
+    "tipo_usuario": "Administrador",
+    "sucursal": "Lima Centro",
+    "email": "admin@appcourier.com",
+    "direccion": "Av. Principal 123, Lima"
+  }
+}
+```
+
+```json Error Response
+{
+  "data": {
+    "exito": false
+  },
+  "message": "Credenciales incorrectas"
+}
+```
+</ResponseExample>
+
+---
+
+## Customer Login
+
+Authenticate customer users to access their App Courier account and track shipments.
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.appcourier.com/auth/loginCliente \
+  -H "Content-Type: application/json" \
+  -d '{
+    "usuario": "cliente@example.com",
+    "password": "customer_password"
+  }'
+```
+
+```dart Dart
+final response = await api.post(
+  '/auth/loginCliente',
+  data: {
+    'usuario': 'cliente@example.com',
+    'password': 'customer_password',
+  },
+);
+```
+</CodeGroup>
+
+### Request Body
+
+<ParamField body="usuario" type="string" required>
+  Customer's username or email address
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Customer's password
+</ParamField>
+
+### Response
+
+<ResponseField name="data" type="object">
+  <ResponseField name="exito" type="boolean">
+    Indicates if the login was successful
+  </ResponseField>
+  
+  <ResponseField name="token" type="string">
+    JWT authentication token for subsequent API requests
+  </ResponseField>
+  
+  <ResponseField name="id_usuario" type="integer">
+    Unique identifier for the authenticated customer
+  </ResponseField>
+  
+  <ResponseField name="id_tipo_usuario" type="integer">
+    User type identifier (customer role)
+  </ResponseField>
+  
+  <ResponseField name="fullname" type="string">
+    Full name of the customer
+  </ResponseField>
+  
+  <ResponseField name="id_sucursal" type="integer">
+    Associated branch/office ID
+  </ResponseField>
+  
+  <ResponseField name="tipo_usuario" type="string">
+    User type description
+  </ResponseField>
+  
+  <ResponseField name="sucursal" type="string">
+    Branch/office name
+  </ResponseField>
+  
+  <ResponseField name="email" type="string">
+    Customer's email address
+  </ResponseField>
+  
+  <ResponseField name="direccion" type="string">
+    Customer's address
+  </ResponseField>
+</ResponseField>
+
+<ResponseExample>
+```json Success Response
+{
+  "data": {
+    "exito": true,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "id_usuario": 456,
+    "id_tipo_usuario": 3,
+    "fullname": "María García",
+    "id_sucursal": 2,
+    "tipo_usuario": "Cliente",
+    "sucursal": "Lima Norte",
+    "email": "cliente@example.com",
+    "direccion": "Jr. Los Olivos 456, Lima"
+  }
+}
+```
+
+```json Error Response
+{
+  "data": {
+    "exito": false
+  },
+  "message": "Credenciales incorrectas"
+}
+```
+</ResponseExample>
+
+## Authentication Token Usage
+
+After successful login, include the authentication token in subsequent API requests:
+
+```bash
+curl -X GET https://api.appcourier.com/encomienda/getEncomiendas \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+<Note>
+  Tokens are stored in SharedPreferences on the client side and should be included in the Authorization header for all authenticated requests.
+</Note>

@@ -1,0 +1,191 @@
+---
+title: 'Environment Configuration'
+description: 'Configure environment variables and build modes for App Courier'
+icon: 'gear'
+---
+
+## Overview
+
+App Courier uses a simple environment configuration system to manage different build modes and settings. This guide covers how to configure your environment for development and production.
+
+## Environment Class
+
+The main environment configuration is located in `lib/core/config/environment.dart`:
+
+```dart
+class Environment {
+  static const bool useMockData = false;
+}
+```
+
+### Configuration Options
+
+<ParamField path="useMockData" type="bool" default="false">
+  Controls whether the app uses mock data instead of real API calls. Useful for testing and development.
+</ParamField>
+
+## Build Modes
+
+Flutter supports three build modes that affect app performance and debugging:
+
+### Debug Mode
+
+Optimized for development with hot reload enabled:
+
+```bash
+flutter run
+# or explicitly
+flutter run --debug
+```
+
+**Characteristics:**
+- Hot reload and hot restart enabled
+- Assertions enabled
+- Service extensions enabled
+- Slower runtime performance
+- Larger app size
+
+### Profile Mode
+
+For performance testing and profiling:
+
+```bash
+flutter run --profile
+```
+
+**Characteristics:**
+- Some debugging ability maintained
+- Performance tracking enabled
+- Service extensions enabled
+- Optimized performance
+- Medium app size
+
+### Release Mode
+
+Optimized for production deployment:
+
+```bash
+flutter build apk --release  # Android
+flutter build ios --release  # iOS
+```
+
+**Characteristics:**
+- Maximum optimization
+- No debugging capabilities
+- Smallest app size
+- Best runtime performance
+- Assertions disabled
+
+## Environment Variables
+
+<Warning>
+  Currently, the app uses hardcoded configuration values. For production deployments, consider implementing proper environment variable management using packages like `flutter_dotenv` or `envied`.
+</Warning>
+
+### Recommended Environment Setup
+
+For better configuration management, you can implement environment-specific settings:
+
+```dart
+// lib/core/config/environment.dart
+class Environment {
+  static const String environment = String.fromEnvironment(
+    'ENV',
+    defaultValue: 'development',
+  );
+  
+  static const bool useMockData = bool.fromEnvironment(
+    'USE_MOCK_DATA',
+    defaultValue: false,
+  );
+  
+  static bool get isDevelopment => environment == 'development';
+  static bool get isProduction => environment == 'production';
+  static bool get isStaging => environment == 'staging';
+}
+```
+
+Then build with specific environment variables:
+
+```bash
+# Development
+flutter run --dart-define=ENV=development --dart-define=USE_MOCK_DATA=true
+
+# Staging
+flutter build apk --dart-define=ENV=staging
+
+# Production
+flutter build apk --dart-define=ENV=production
+```
+
+## Configuration Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Version Control" icon="code-branch">
+    Never commit sensitive configuration values to version control. Use environment variables or secure vaults.
+  </Card>
+  
+  <Card title="Environment Separation" icon="layer-group">
+    Maintain separate configurations for development, staging, and production environments.
+  </Card>
+  
+  <Card title="Mock Data" icon="database">
+    Use mock data during development to avoid unnecessary API calls and speed up testing.
+  </Card>
+  
+  <Card title="Build Variants" icon="mobile">
+    Consider using Flutter flavors for managing multiple app variants with different configurations.
+  </Card>
+</CardGroup>
+
+## Flutter Flavors (Advanced)
+
+For complex apps requiring multiple variants, implement Flutter flavors:
+
+### Android Configuration
+
+Add to `android/app/build.gradle`:
+
+```gradle
+android {
+    flavorDimensions "environment"
+    
+    productFlavors {
+        dev {
+            dimension "environment"
+            applicationIdSuffix ".dev"
+            versionNameSuffix "-dev"
+        }
+        
+        prod {
+            dimension "environment"
+        }
+    }
+}
+```
+
+### iOS Configuration
+
+Create schemes in Xcode for each flavor (dev, prod).
+
+### Building with Flavors
+
+```bash
+# Development flavor
+flutter run --flavor dev
+
+# Production flavor
+flutter build apk --flavor prod
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="API Setup" icon="plug" href="/configuration/api-setup">
+    Configure backend API connection and authentication
+  </Card>
+  
+  <Card title="Permissions" icon="shield-check" href="/configuration/permissions">
+    Set up required Android and iOS permissions
+  </Card>
+</CardGroup>

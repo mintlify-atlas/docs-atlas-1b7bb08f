@@ -1,0 +1,309 @@
+---
+title: "Package Management"
+description: "Create, track, and manage courier packages (encomiendas) throughout their delivery lifecycle"
+---
+
+## Overview
+
+App Courier's package management system handles the complete lifecycle of shipments, from creation to delivery. Packages are called "encomiendas" in the system and include comprehensive sender, recipient, and tracking information.
+
+## Package Structure
+
+Each package (Encomienda) contains:
+
+<CardGroup cols={2}>
+  <Card title="Sender Information" icon="user">
+    - Name and document number
+    - Contact details and phone
+    - Pickup address and location
+    - Reference/landmark information
+  </Card>
+  <Card title="Recipient Information" icon="location-dot">
+    - Name and document number
+    - Delivery address and location
+    - Contact details and phone
+    - Reference/landmark information
+  </Card>
+  <Card title="Package Details" icon="box">
+    - Weight (kg) and quantity
+    - Shipping type and delivery type
+    - Estimated delivery date
+    - Cost and payment method
+  </Card>
+  <Card title="Tracking Information" icon="map-pin">
+    - Unique remito number
+    - Current status
+    - Origin and destination branches
+    - Assigned driver (if applicable)
+  </Card>
+</CardGroup>
+
+## Creating Packages
+
+<Steps>
+  <Step title="Select Customer">
+    Choose an existing customer or create a new one. The customer can be the sender or recipient.
+  </Step>
+  
+  <Step title="Enter Sender Details">
+    Provide sender information including:
+    - Document number (DNI or RUC)
+    - Full name or business name
+    - Contact phone number
+    - Pickup address details
+    - District/location
+  </Step>
+  
+  <Step title="Enter Recipient Details">
+    Provide recipient information:
+    - Document number
+    - Full name
+    - Contact phone number
+    - Delivery address
+    - District/location
+  </Step>
+  
+  <Step title="Configure Package Details">
+    Set package specifications:
+    - **Shipping Type**: Express, Regular, etc.
+    - **Delivery Type**: Agency-to-Agency, Home Delivery, etc.
+    - **Weight**: Package weight in kilograms
+    - **Quantity**: Number of packages
+    - **Delivery Date**: Expected delivery date
+  </Step>
+  
+  <Step title="Calculate Price">
+    The system automatically calculates the shipping cost based on:
+    - Distance between origin and destination
+    - Package weight
+    - Delivery type
+    - Customer's pricing plan
+  </Step>
+  
+  <Step title="Select Payment Method">
+    Choose payment method:
+    - Cash (Contado)
+    - Credit (Crédito)
+    - Bank Transfer/Deposit (requires bank and operation number)
+  </Step>
+  
+  <Step title="Add Optional Information">
+    - Sender's tracking number (guía remitente)
+    - Special observations or instructions
+  </Step>
+</Steps>
+
+## Package Types
+
+The system supports various shipping types:
+
+<AccordionGroup>
+  <Accordion title="Sobre (Envelope)">
+    Small documents and letters, typically under 0.5 kg
+  </Accordion>
+  
+  <Accordion title="Pequeño Paquete Documento">
+    Small document packages, usually 0.5-2 kg
+  </Accordion>
+  
+  <Accordion title="Pequeño Paquete Mercancía">
+    Small merchandise packages, typically 2-5 kg
+  </Accordion>
+  
+  <Accordion title="Encomienda Postal">
+    Standard packages of any size, over 5 kg
+  </Accordion>
+</AccordionGroup>
+
+## Delivery Types
+
+<Tabs>
+  <Tab title="Agency to Agency">
+    **Sucursal a Sucursal**
+    
+    Customer drops off package at origin branch, recipient picks up at destination branch.
+    
+    - Lowest cost option
+    - No address required
+    - Fastest processing
+  </Tab>
+  
+  <Tab title="Home Pickup">
+    **Domicilio a Sucursal**
+    
+    Driver picks up from sender's address, recipient collects at destination branch.
+    
+    - Sender address required
+    - Additional pickup fee
+    - Convenient for senders
+  </Tab>
+  
+  <Tab title="Home Delivery">
+    **Sucursal a Domicilio**
+    
+    Customer drops off at origin branch, driver delivers to recipient's address.
+    
+    - Recipient address required
+    - Additional delivery fee
+    - Convenient for recipients
+  </Tab>
+  
+  <Tab title="Door to Door">
+    **Domicilio a Domicilio**
+    
+    Complete door-to-door service with pickup and delivery.
+    
+    - Both addresses required
+    - Highest cost (pickup + delivery fees)
+    - Maximum convenience
+  </Tab>
+</Tabs>
+
+## Package Tracking
+
+Every package is assigned a unique **remito number** (serie_remito) for tracking.
+
+### Tracking Methods
+
+1. **Quick Search**: Enter remito number in the search bar
+2. **Package List**: Filter by date, branch, status, or customer
+3. **Customer View**: See all packages for a specific customer
+4. **Driver View**: View packages assigned to a driver
+
+### Status Updates
+
+Packages progress through multiple statuses:
+
+```dart
+// Common package statuses
+"Pendiente"          // Pending pickup/processing
+"En tránsito"        // In transit between branches
+"En sucursal destino" // Arrived at destination branch
+"En reparto"         // Out for delivery
+"ENTREGADO"          // Successfully delivered
+"Devuelto"           // Returned to sender
+```
+
+<Note>
+  Each status change is logged with timestamp and user information in the package history.
+</Note>
+
+## Managing Packages
+
+### Viewing Package Details
+
+Click on any package to view:
+- Complete sender and recipient information
+- Current status and location
+- Status history timeline
+- Assigned driver (if applicable)
+- Package images/photos
+- Cost breakdown
+
+### Updating Package Status
+
+<Steps>
+  <Step title="Open Package Details">
+    Select the package from the list
+  </Step>
+  
+  <Step title="View Available Statuses">
+    Click "Cambiar Estado" to see valid next statuses
+  </Step>
+  
+  <Step title="Select New Status">
+    Choose the appropriate status from the dropdown
+  </Step>
+  
+  <Step title="Confirm Update">
+    The status updates immediately and appears in the history
+  </Step>
+</Steps>
+
+### Assigning Drivers
+
+For home delivery packages:
+
+1. Open package details
+2. Click "Asignar Motorizado"
+3. Select one or more drivers from the list
+4. Drivers receive the package assignment
+5. Package status updates to "En reparto"
+
+### Package Images
+
+Attach photos to packages for proof of delivery or condition:
+
+- Take photos using the device camera
+- Photos are uploaded and linked to the package
+- View all package images in the image gallery
+- Useful for damage claims or delivery confirmation
+
+## Reporting
+
+### Available Reports
+
+<CardGroup cols={2}>
+  <Card title="Package Labels" icon="tag">
+    Print shipping labels with remito number, sender/recipient info, and barcode
+  </Card>
+  <Card title="Package Lists" icon="list">
+    Generate lists filtered by date, branch, status, or driver
+  </Card>
+  <Card title="Delivery Receipts" icon="file-signature">
+    Print receipts for package pickup or delivery
+  </Card>
+  <Card title="Status Reports" icon="chart-line">
+    View package counts by status for operational insights
+  </Card>
+</CardGroup>
+
+## Integration
+
+Package management integrates with:
+
+- **Customer Management**: Link packages to customer accounts
+- **Pricing Calculator**: Automatic cost calculation
+- **Branch Management**: Route packages between branches
+- **Driver Assignment**: Assign packages to drivers
+- **Status Tracking**: Real-time status updates
+
+## API Reference
+
+For programmatic package management, see:
+
+<CardGroup cols={2}>
+  <Card title="Create Package" icon="plus" href="/api/packages/create">
+    POST /encomienda/createEncomienda
+  </Card>
+  <Card title="Track Package" icon="magnifying-glass" href="/api/packages/track">
+    GET /encomienda/getEncomiendas
+  </Card>
+  <Card title="Update Status" icon="arrow-up" href="/api/packages/status">
+    POST /encomienda/addEstadoEncomienda
+  </Card>
+  <Card title="Calculate Price" icon="calculator" href="/api/packages/pricing">
+    POST /encomienda/calcularPrecio
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+<Note>
+  **Always verify addresses**: Incorrect addresses are the #1 cause of delivery delays. Double-check district/location information.
+</Note>
+
+<Tip>
+  **Use reference landmarks**: Include nearby landmarks in the reference field to help drivers find addresses more easily.
+</Tip>
+
+<Warning>
+  **Update statuses promptly**: Keep package statuses current so customers have accurate tracking information.
+</Warning>
+
+## See Also
+
+- [Customer Management](/features/customer-management)
+- [Delivery Tracking](/features/delivery-tracking)
+- [Pricing Calculator](/features/pricing-calculator)
+- [Admin Guide](/guides/admin-guide)

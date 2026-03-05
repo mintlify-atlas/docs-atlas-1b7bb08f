@@ -1,0 +1,276 @@
+---
+title: 'Branch APIs'
+description: 'Retrieve branch office (sucursal) information and coverage areas'
+---
+
+## Overview
+
+The branch APIs provide information about physical branch locations, including full details and simplified views filtered by coverage area.
+
+<Tabs>
+  <Tab title="Get All Branches">
+    ## Get Sucursales
+
+    <CodeGroup>
+    ```bash Request
+    GET /sucursales/getSucursales
+    ```
+
+    ```dart Implementation
+    // lib/services/sucursal_service.dart:11
+    Future<List<Sucursal>> getSucursales() async {
+      final response = await _apiClient.get(
+        ApiEndpoints.sucursales,
+      );
+
+      if (response.statusCode == 200) {
+        final body = response.data is String
+            ? jsonDecode(response.data)
+            : response.data as Map<String, dynamic>;
+
+        final List<dynamic> data = body['data'] ?? [];
+
+        return data.map((e) => Sucursal.fromJson(e)).toList();
+      } else {
+        throw Exception('Error al obtener sucursales');
+      }
+    }
+    ```
+    </CodeGroup>
+
+    ### Response
+
+    Returns an array of complete branch objects with all details.
+
+    <ResponseField name="data" type="array">
+      <Expandable title="Sucursal Object">
+        <ResponseField name="id" type="integer" required>
+          Unique identifier for the branch
+        </ResponseField>
+        <ResponseField name="nombre" type="string" required>
+          Branch name
+        </ResponseField>
+        <ResponseField name="direccion" type="string" required>
+          Branch address
+        </ResponseField>
+        <ResponseField name="telefono" type="string" required>
+          Branch phone number
+        </ResponseField>
+        <ResponseField name="celular" type="string">
+          Branch mobile/cell phone number
+        </ResponseField>
+        <ResponseField name="tipo" type="integer">
+          Branch type identifier
+        </ResponseField>
+        <ResponseField name="id_distrito" type="integer">
+          District ID where the branch is located
+        </ResponseField>
+        <ResponseField name="distrito_nombre" type="string">
+          Name of the district where the branch is located
+        </ResponseField>
+        <ResponseField name="id_plan" type="integer">
+          Associated plan ID
+        </ResponseField>
+        <ResponseField name="plan_nombre" type="string">
+          Name of the associated plan
+        </ResponseField>
+        <ResponseField name="serie_remito" type="string">
+          Document series for remito (delivery receipt)
+        </ResponseField>
+        <ResponseField name="serie_boleta" type="string">
+          Document series for boleta (invoice)
+        </ResponseField>
+        <ResponseField name="serie_factura" type="string">
+          Document series for factura (bill)
+        </ResponseField>
+        <ResponseField name="serie_nc_factura" type="string">
+          Document series for credit note on factura
+        </ResponseField>
+        <ResponseField name="serie_nc_boleta" type="string">
+          Document series for credit note on boleta
+        </ResponseField>
+        <ResponseField name="serie_caja" type="string">
+          Document series for cash register
+        </ResponseField>
+        <ResponseField name="serie_transportista" type="string">
+          Document series for carrier/transporter
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseExample>
+    ```json Response
+    {
+      "data": [
+        {
+          "id": 1,
+          "nombre": "Sucursal Central Lima",
+          "direccion": "Av. Principal 123",
+          "telefono": "01-1234567",
+          "celular": "987654321",
+          "tipo": 1,
+          "id_distrito": 15,
+          "distrito_nombre": "Miraflores",
+          "id_plan": 2,
+          "plan_nombre": "Plan Premium",
+          "serie_remito": "R001",
+          "serie_boleta": "B001",
+          "serie_factura": "F001",
+          "serie_nc_factura": "NCF001",
+          "serie_nc_boleta": "NCB001",
+          "serie_caja": "C001",
+          "serie_transportista": "T001"
+        }
+      ]
+    }
+    ```
+    </ResponseExample>
+
+    <Note>
+      Source: `lib/models/sucursal.dart:42` - Complete model definition with all branch fields.
+    </Note>
+  </Tab>
+
+  <Tab title="Origin Coverage">
+    ## Get Branches - Origin Coverage
+
+    <CodeGroup>
+    ```bash Request
+    GET /sucursales/getSucursalesSimpleCoberturaOrigen
+    ```
+
+    ```dart Implementation
+    // lib/services/sucursal_service.dart:29
+    Future<List<Sucursal>> getSucursalesSimpleCoberturaOrigen() async {
+      final response = await _apiClient.get(
+        ApiEndpoints.sucursalesSimpleCoberturaOrigen,
+      );
+
+      if (response.statusCode == 200) {
+        final body = response.data is String
+            ? jsonDecode(response.data)
+            : response.data as Map<String, dynamic>;
+
+        final List<dynamic> data = body['data'] ?? [];
+
+        return data.map((e) => Sucursal.fromJson(e)).toList();
+      } else {
+        throw Exception('Error al obtener sucursales');
+      }
+    }
+    ```
+    </CodeGroup>
+
+    ### Description
+
+    Retrieves branches that can serve as origin points for shipments. This endpoint returns a simplified list of branches that have origin coverage capability.
+
+    ### Response
+
+    Returns an array of branch objects filtered for origin coverage.
+
+    <ResponseField name="data" type="array">
+      Array of Sucursal objects (see "Get All Branches" tab for complete structure)
+    </ResponseField>
+
+    <ResponseExample>
+    ```json Response
+    {
+      "data": [
+        {
+          "id": 1,
+          "nombre": "Lima Centro",
+          "direccion": "Av. Central 456",
+          "telefono": "01-7654321"
+        },
+        {
+          "id": 3,
+          "nombre": "Arequipa Norte",
+          "direccion": "Calle Principal 789",
+          "telefono": "054-123456"
+        }
+      ]
+    }
+    ```
+    </ResponseExample>
+  </Tab>
+
+  <Tab title="Destination Coverage">
+    ## Get Branches - Destination Coverage
+
+    <CodeGroup>
+    ```bash Request
+    GET /sucursales/getSucursalesSimpleCoberturaDestino
+    ```
+
+    ```dart Implementation
+    // lib/services/sucursal_service.dart:47
+    Future<List<Sucursal>> getSucursalesSimpleCoberturaDestino() async {
+      final response = await _apiClient.get(
+        ApiEndpoints.sucursalesSimpleCoberturaDestino,
+      );
+
+      if (response.statusCode == 200) {
+        final body = response.data is String
+            ? jsonDecode(response.data)
+            : response.data as Map<String, dynamic>;
+
+        final List<dynamic> data = body['data'] ?? [];
+
+        return data.map((e) => Sucursal.fromJson(e)).toList();
+      } else {
+        throw Exception('Error al obtener sucursales');
+      }
+    }
+    ```
+    </CodeGroup>
+
+    ### Description
+
+    Retrieves branches that can serve as destination points for shipments. This endpoint returns a simplified list of branches that have destination coverage capability.
+
+    ### Response
+
+    Returns an array of branch objects filtered for destination coverage.
+
+    <ResponseField name="data" type="array">
+      Array of Sucursal objects (see "Get All Branches" tab for complete structure)
+    </ResponseField>
+
+    <ResponseExample>
+    ```json Response
+    {
+      "data": [
+        {
+          "id": 2,
+          "nombre": "Cusco Plaza",
+          "direccion": "Plaza Principal 321",
+          "telefono": "084-987654"
+        },
+        {
+          "id": 4,
+          "nombre": "Trujillo Este",
+          "direccion": "Av. Este 555",
+          "telefono": "044-555666"
+        }
+      ]
+    }
+    ```
+    </ResponseExample>
+  </Tab>
+</Tabs>
+
+## Usage Patterns
+
+### Full Branch Information
+Use `getSucursales` when you need complete branch details including document series, plan information, and district data.
+
+### Shipment Creation
+- Use `getSucursalesSimpleCoberturaOrigen` to populate origin branch dropdowns
+- Use `getSucursalesSimpleCoberturaDestino` to populate destination branch dropdowns
+
+This separation ensures users can only select valid branches based on their coverage capabilities.
+
+<Info>
+  All branch endpoints are defined in `lib/core/api/api_endpoints.dart:20-24` and implemented in `lib/services/sucursal_service.dart`.
+</Info>

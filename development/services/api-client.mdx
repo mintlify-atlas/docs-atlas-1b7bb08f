@@ -1,0 +1,527 @@
+---
+title: API Client
+description: Implementation details of the centralized HTTP client
+---
+
+## Overview
+
+The `ApiClient` class is a wrapper around the [Dio](https://pub.dev/packages/dio) HTTP client that provides:
+
+- Centralized base URL configuration
+- Automatic JWT token injection
+- Request/response interceptors
+- Error handling and 401 auto-logout
+- Timeout configuration
+
+**Location**: `lib/core/api/api_client.dart:4`
+
+## Class Definition
+
+```dart
+import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class ApiClient {
+  late final Dio _dio;
+
+  ApiClient() {
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: 'https://api.eisegmi.facturador.es',
+        validateStatus: (status) {
+          return status != null && status >= 200 && status < 300;
+        },
+        connectTimeout: const Duration(seconds: 20),
+        receiveTimeout: const Duration(seconds: 20),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
+
+    _setupInterceptors();
+  }
+
+  void _setupInterceptors() {
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final prefs = await SharedPreferences.getInstance();
+          final token = prefs.getString('token');
+
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+
+          return handler.next(options);
+        },
+        onError: (error, handler) async {
+          if (error.response?.statusCode == 401) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove('token');
+            // TODO: Redirect to login
+          }
+          return handler.next(error);
+        },
+      ),
+    );
+  }
+
+  Future<Response> get(String path) async {
+    return await _dio.get(path);
+  }
+
+  Future<Response> post(String path, {dynamic data, Options? options}) async {
+    return await _dio.post(path, data: data, options: options);
+  }
+
+  Future<Response> put(String path, {dynamic data}) async {
+    return await _dio.put(path, data: data);
+  }
+
+  Future<Response> delete(String path) async {
+    return await _dio.delete(path);
+  }
+}
+```
+
+## Configuration
+
+### Base URL
+
+```dart
+baseUrl: 'https://api.eisegmi.facturador.es'
+```
+
+All API requests are made relative to this base URL. For example:
+
+```dart
+await api.get('/clientes/getClientes');
+// Calls: https://api.eisegmi.facturador.es/clientes/getClientes
+```
+
+### Timeouts
+
+```dart
+connectTimeout: const Duration(seconds: 20),
+receiveTimeout: const Duration(seconds: 20),
+```
+
+- **connectTimeout**: Maximum time to establish connection
+- **receiveTimeout**: Maximum time to receive response after connection
+
+Both are set to 20 seconds to accommodate slower network conditions.
+
+### Default Headers
+
+```dart
+headers: {
+  'Content-Type': 'application/json',
+}
+```
+
+All requests default to JSON content type. Can be overridden for specific requests (e.g., multipart/form-data).
+
+### Status Code Validation
+
+```dart
+validateStatus: (status) {
+  return status != null && status >= 200 && status < 300;
+}
+```
+
+Only 2xx status codes are considered successful. Other codes trigger error handling.
+
+## Interceptors
+
+### Request Interceptor
+
+Automatically injects JWT token from SharedPreferences:
+
+```dart
+onRequest: (options, handler) async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('token');
+
+  if (token != null) {
+    options.headers['Authorization'] = 'Bearer $token';
+  }
+
+  return handler.next(options);
+}
+```
+
+**Flow:**
+1. Before each request, read token from SharedPreferences
+2. If token exists, add `Authorization: Bearer {token}` header
+3. Proceed with request
+
+This means services don't need to manually add authentication headers.
+
+### Error Interceptor
+
+Handles 401 Unauthorized responses:
+
+```dart
+onError: (error, handler) async {
+  if (error.response?.statusCode == 401) {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('token');
+    // TODO: Redirect to login
+  }
+  return handler.next(error);
+}
+```
+
+**Flow:**
+1. If response status is 401 (Unauthorized)
+2. Remove invalid token from SharedPreferences
+3. User should be redirected to login (to be implemented)
+
+## HTTP Methods
+
+### GET
+
+```dart
+Future<Response> get(String path) async {
+  return await _dio.get(path);
+}
+```
+
+**Usage:**
+```dart
+final response = await api.get('/clientes/getClientes?id_sucursal=1');
+```
+
+### POST
+
+```dart
+Future<Response> post(String path, {dynamic data, Options? options}) async {
+  return await _dio.post(path, data: data, options: options);
+}
+```
+
+**Usage:**
+```dart
+// JSON data
+final response = await api.post(
+  '/clientes/createCliente',
+  data: {'nombre': 'Juan Pérez', 'documento': '12345678'},
+);
+
+// Multipart form data
+final formData = FormData.fromMap({'file': await MultipartFile.fromFile(path)});
+final response = await api.post(
+  '/encomienda/addImagenEncomienda',
+  data: formData,
+  options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+);
+```
+
+### PUT
+
+```dart
+Future<Response> put(String path, {dynamic data}) async {
+  return await _dio.put(path, data: data);
+}
+```
+
+**Usage:**
+```dart
+final response = await api.put(
+  '/clientes/updateCliente',
+  data: customer.updateToJson(),
+);
+```
+
+### DELETE
+
+```dart
+Future<Response> delete(String path) async {
+  return await _dio.delete(path);
+}
+```
+
+**Usage:**
+```dart
+final response = await api.delete('/clientes/deleteCliente?id=123');
+```
+
+## Authentication Flow
+
+### 1. Login
+
+```dart
+// In AuthService
+Future<void> login(String email, String password) async {
+  final response = await api.post(
+    '/auth/login',
+    data: {'email': email, 'password': password},
+  );
+
+  final token = response.data['token'];
+  
+  // Store token
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('token', token);
+}
+```
+
+### 2. Subsequent Requests
+
+```dart
+// Token automatically added by interceptor
+final response = await api.get('/clientes/getClientes');
+// Request includes: Authorization: Bearer {token}
+```
+
+### 3. Logout
+
+```dart
+Future<void> logout() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.remove('token');
+  // Navigate to login screen
+}
+```
+
+### 4. Token Expiration
+
+```dart
+// Automatic handling by error interceptor
+// When 401 received:
+// 1. Token removed
+// 2. User redirected to login (to be implemented)
+```
+
+## Usage in Services
+
+Services receive `ApiClient` via dependency injection:
+
+```dart
+class CustomerService {
+  final ApiClient api;
+  CustomerService(this.api);
+
+  Future<List<Customer>> getCustomers(int idSucursal) async {
+    // ApiClient handles:
+    // - Base URL
+    // - Authentication header
+    // - Timeouts
+    // - Error interception
+    final response = await api.post(
+      ApiEndpoints.clientes,
+      data: {'id_sucursal': idSucursal},
+    );
+
+    // Service only needs to parse response
+    final body = response.data as Map<String, dynamic>;
+    final List<dynamic> lista = body['data'] ?? [];
+    return lista.map((e) => Customer.fromJson(e)).toList();
+  }
+}
+```
+
+## API Endpoints
+
+Endpoints are defined in `ApiEndpoints` class:
+
+```dart
+class ApiEndpoints {
+  // Authentication
+  static const String login = '/auth/login';
+  static const String loginCliente = '/auth/loginCliente';
+  
+  // Customers
+  static const String clientes = '/clientes/getClientes';
+  static const String createCustomer = '/clientes/createCliente';
+  static const String updateCustomer = '/clientes/updateCliente';
+  
+  // Encomiendas
+  static const String encomiendas = '/encomienda/getEncomiendas';
+  static const String createEncomienda = '/encomienda/createEncomienda';
+  static const String calcularPrecio = '/encomienda/calcularPrecio';
+  
+  // ... more endpoints
+}
+```
+
+**Location**: `lib/core/api/api_endpoints.dart`
+
+**Usage:**
+```dart
+final response = await api.get(ApiEndpoints.clientes);
+```
+
+## Error Handling
+
+### DioException Types
+
+```dart
+try {
+  final response = await api.get('/some/endpoint');
+} on DioException catch (e) {
+  switch (e.type) {
+    case DioExceptionType.connectionTimeout:
+      print('Connection timeout');
+      break;
+    case DioExceptionType.receiveTimeout:
+      print('Receive timeout');
+      break;
+    case DioExceptionType.badResponse:
+      print('Bad response: ${e.response?.statusCode}');
+      break;
+    case DioExceptionType.cancel:
+      print('Request cancelled');
+      break;
+    default:
+      print('Network error');
+  }
+}
+```
+
+### Extract Error Messages
+
+Use `extractErrorMessage` utility:
+
+```dart
+import 'package:courier/core/utils/api_utils.dart';
+
+try {
+  final response = await api.post(endpoint, data: data);
+} on DioException catch (e) {
+  throw extractErrorMessage(e.response?.data);
+} catch (_) {
+  throw Exception("Error inesperado");
+}
+```
+
+The utility extracts user-friendly messages from API error responses.
+
+## Testing
+
+### Mock ApiClient
+
+```dart
+class MockApiClient extends Mock implements ApiClient {}
+
+void main() {
+  test('service handles API response', () async {
+    final mockApi = MockApiClient();
+    final service = CustomerService(mockApi);
+    
+    when(mockApi.get(any)).thenAnswer((_) async => Response(
+      data: {'data': [{'id': 1, 'nombre': 'Test'}]},
+      statusCode: 200,
+      requestOptions: RequestOptions(path: '/test'),
+    ));
+    
+    final customers = await service.getCustomers(1);
+    expect(customers.length, 1);
+  });
+}
+```
+
+## Extending ApiClient
+
+### Add Request Logging
+
+```dart
+_dio.interceptors.add(
+  InterceptorsWrapper(
+    onRequest: (options, handler) {
+      print('REQUEST[${options.method}] => PATH: ${options.path}');
+      return handler.next(options);
+    },
+    onResponse: (response, handler) {
+      print('RESPONSE[${response.statusCode}] => DATA: ${response.data}');
+      return handler.next(response);
+    },
+  ),
+);
+```
+
+### Add Retry Logic
+
+```dart
+_dio.interceptors.add(
+  InterceptorsWrapper(
+    onError: (error, handler) async {
+      if (error.type == DioExceptionType.connectionTimeout) {
+        // Retry the request
+        final response = await _dio.fetch(error.requestOptions);
+        return handler.resolve(response);
+      }
+      return handler.next(error);
+    },
+  ),
+);
+```
+
+### Add Cache
+
+```dart
+import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
+
+final cacheOptions = CacheOptions(
+  store: MemCacheStore(),
+  policy: CachePolicy.request,
+  maxStale: const Duration(days: 7),
+);
+
+_dio.interceptors.add(DioCacheInterceptor(options: cacheOptions));
+```
+
+## Best Practices
+
+<Accordion title="Single ApiClient instance">
+Create one `ApiClient` instance at app startup:
+
+```dart
+// In main.dart
+final apiClient = ApiClient();
+
+// Share across all services
+runApp(
+  MultiProvider(
+    providers: [
+      ChangeNotifierProvider(
+        create: (_) => CustomersProvider(CustomerService(apiClient)),
+      ),
+      // ... more providers
+    ],
+    child: MyApp(),
+  ),
+);
+```
+</Accordion>
+
+<Accordion title="Use ApiEndpoints constants">
+```dart
+// ✅ Good
+await api.get(ApiEndpoints.clientes);
+
+// ❌ Bad
+await api.get('/clientes/getClientes');
+```
+</Accordion>
+
+<Accordion title="Handle all error cases">
+```dart
+try {
+  final response = await api.post(...);
+} on DioException catch (e) {
+  // Handle Dio-specific errors
+  throw extractErrorMessage(e.response?.data);
+} catch (e) {
+  // Handle unexpected errors
+  throw Exception("Error inesperado: $e");
+}
+```
+</Accordion>
+
+## Related Documentation
+
+- [Services Overview](/development/services/overview)
+- [State Management](/development/state-management)
+- [Architecture Overview](/development/architecture)

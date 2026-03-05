@@ -1,0 +1,513 @@
+---
+title: Customer Model
+description: Complete documentation of the Customer data model
+---
+
+## Overview
+
+The `Customer` class represents a client in the App Courier system. It can represent both individual customers and corporate clients, with support for multiple delivery addresses, pricing plans, and billing configurations.
+
+**Location**: `lib/models/customer.dart`
+
+## Class Definition
+
+```dart
+class Customer {
+  // Basic information
+  int? id;
+  String? nombres;
+  String? nroDocumento;
+  String? razonSocial;
+  String? celular;
+  
+  // Registration fields (for client app)
+  String? fechaNacimiento;
+  String? email;
+  String? password;
+  
+  // Location
+  int? idDepartamento;
+  int? idProvincia;
+  int? idDistrito;
+  String? lat;
+  String? lon;
+  String? distritoNombre;
+  String? provinciaNombre;
+  String? departamentoNombre;
+  
+  // Multiple addresses
+  List<Direccion> direcciones;
+  
+  // Business configuration
+  String? tipoCliente;
+  String? tipoPago;
+  int? igv;
+  int? idTipoDetraccion;
+  int? idPlan;
+  int? idListaPrecio;
+  String? planNombre;
+  
+  // Extra charges
+  int? extraDomDom;  // Domicilio a Domicilio extra
+  int? extraAgeDom;  // Agencia a Domicilio extra
+  int? extraDomAge;  // Domicilio a Agencia extra
+}
+```
+
+## Constructor
+
+```dart
+Customer({
+  this.id,
+  this.nombres,
+  this.nroDocumento,
+  this.fechaNacimiento,
+  this.email,
+  this.password,
+  this.razonSocial,
+  this.celular,
+  this.idDepartamento,
+  this.idProvincia,
+  this.idDistrito,
+  this.direcciones = const [],
+  this.tipoCliente,
+  this.tipoPago,
+  this.igv,
+  this.idTipoDetraccion,
+  this.idPlan,
+  this.extraDomDom,
+  this.extraDomAge,
+  this.extraAgeDom,
+  this.lat,
+  this.lon,
+  this.distritoNombre,
+  this.planNombre,
+  this.provinciaNombre,
+  this.departamentoNombre,
+  this.idListaPrecio,
+});
+```
+
+## JSON Serialization
+
+### fromJson (Standard List Response)
+
+Parses customer data from list endpoints:
+
+```dart
+factory Customer.fromJson(Map<String, dynamic> json) {
+  return Customer(
+    id: json['id'],
+    idDistrito: json['id_distrito'],
+    nroDocumento: json['numero_documento'],
+    nombres: json['nombre'],
+    lat: json['lat'],
+    lon: json['lon'],
+    distritoNombre: json['distrito_nombre'],
+    planNombre: json['plan_nombre'],
+    celular: json['celular'],
+    extraDomDom: json['extra_domdom'],
+    extraDomAge: json['extra_domage'],
+    extraAgeDom: json['extra_agedom'],
+    tipoCliente: json['tipo_cliente'],
+    igv: json['incluye_igv'],
+    tipoPago: json['tipo_pago'],
+  );
+}
+```
+
+**Usage**:
+```dart
+final customers = (jsonData['data'] as List)
+    .map((e) => Customer.fromJson(e))
+    .toList();
+```
+
+### fromCustomerByIdJson (Detail Response)
+
+Parses full customer details including addresses:
+
+```dart
+factory Customer.fromCustomerByIdJson(Map<String, dynamic> json) {
+  return Customer(
+    id: json['id'],
+    idDistrito: json['id_distrito'],
+    nroDocumento: json['numero_documento'],
+    nombres: json['nombre'],
+    lat: json['lat'],
+    lon: json['lon'],
+    idTipoDetraccion: json['id_tipo_detraccion'],
+    idListaPrecio: json['id_lista_precio'],
+    distritoNombre: json['distrito_nombre'],
+    provinciaNombre: json['provincia_nombre'],
+    departamentoNombre: json['departamento_nombre'],
+    planNombre: json['plan_nombre'],
+    celular: json['celular'],
+    extraDomDom: json['extra_domdom'],
+    extraDomAge: json['extra_domage'],
+    extraAgeDom: json['extra_agedom'],
+    tipoCliente: json['tipo_cliente'],
+    igv: json['incluye_igv'],
+    tipoPago: json['tipo_pago'],
+    direcciones: (json['direcciones'] as List<dynamic>?)
+        ?.map((e) => Direccion.fromJson(e))
+        .toList() ??
+        [],
+  );
+}
+```
+
+**Usage**:
+```dart
+final response = await api.get('/clientes/getClienteById?id=123');
+final customer = Customer.fromCustomerByIdJson(response.data['data']);
+```
+
+### fromSearchJson (Search Response)
+
+Parses minimal customer data from search results:
+
+```dart
+factory Customer.fromSearchJson(Map<String, dynamic> json) {
+  return Customer(
+    id: json['id'],
+    nombres: json['nombre'] ?? json['nombres'],
+    nroDocumento: json['numero_documento'],
+  );
+}
+```
+
+**Usage**:
+```dart
+final results = await customerService.getCustomerByDocument('12345678');
+final customers = results.map((e) => Customer.fromSearchJson(e)).toList();
+```
+
+### toJson (Create Customer)
+
+Serializes customer for creation:
+
+```dart
+Map<String, dynamic> toJson() {
+  return {
+    "numero_documento": nroDocumento,
+    "nombres": nombres,
+    "fecha_nacimiento": fechaNacimiento,
+    "email": email,
+    "password": password,
+    "id_lista_precio": idPlan,
+    "id_distrito": idDistrito,
+    "celular": celular ?? '',
+    "tipo_cliente": tipoCliente,
+    "tipo_pago": tipoPago,
+    "incluye_igv": igv,
+    "extra_domicilio_a_domicilio": extraDomDom,
+    "extra_domicilio_a_agencia": extraDomAge,
+    "extra_agencia_a_domicilio": extraAgeDom,
+    "id_tipo_detraccion": idTipoDetraccion,
+    "direcciones": direcciones.map((e) => e.toJson()).toList(),
+  };
+}
+```
+
+### updateToJson (Update Customer)
+
+Serializes customer for updates (includes ID):
+
+```dart
+Map<String, dynamic> updateToJson() {
+  return {
+    "id": id,
+    "numero_documento": nroDocumento,
+    "nombres": nombres,
+    "fecha_nacimiento": fechaNacimiento,
+    "email": email,
+    "password": password,
+    "id_lista_precio": idPlan,
+    "id_distrito": idDistrito,
+    "celular": celular ?? '',
+    "tipo_cliente": tipoCliente,
+    "tipo_pago": tipoPago,
+    "incluye_igv": igv,
+    "extra_domicilio_a_domicilio": extraDomDom,
+    "extra_domicilio_a_agencia": extraDomAge,
+    "extra_agencia_a_domicilio": extraAgeDom,
+    "id_tipo_detraccion": idTipoDetraccion,
+  };
+}
+```
+
+### addDireccionToJson (Add Address)
+
+Serializes customer for adding new addresses:
+
+```dart
+Map<String, dynamic> addDireccionToJson() {
+  return {
+    "id_cliente": id,
+    "direcciones": direcciones.map((e) => e.toJson()).toList(),
+  };
+}
+```
+
+## Field Groups
+
+<Accordion title="Identification Fields">
+- **id**: Unique customer ID
+- **nombres**: Full name
+- **nroDocumento**: DNI (8 digits) or RUC (11 digits)
+- **razonSocial**: Business name (for corporate clients)
+- **celular**: Phone number
+</Accordion>
+
+<Accordion title="Registration Fields">
+Used when customers register through the client app:
+
+- **fechaNacimiento**: Date of birth
+- **email**: Email address
+- **password**: Account password
+</Accordion>
+
+<Accordion title="Location Fields">
+- **idDepartamento**: Department ID
+- **idProvincia**: Province ID
+- **idDistrito**: District ID
+- **departamentoNombre**: Department name
+- **provinciaNombre**: Province name
+- **distritoNombre**: District name
+- **lat**: Latitude coordinate
+- **lon**: Longitude coordinate
+</Accordion>
+
+<Accordion title="Address Management">
+- **direcciones**: List of `Direccion` objects
+
+Each `Direccion` contains:
+```dart
+class Direccion {
+  int? id;
+  String direccion;
+  String? referencia;
+}
+```
+
+Customers can have multiple delivery addresses.
+</Accordion>
+
+<Accordion title="Business Configuration">
+- **tipoCliente**: Customer type ("Natural", "Juridico")
+- **tipoPago**: Payment type ("Efectivo", "Credito")
+- **igv**: Include IGV (1 = yes, 0 = no)
+- **idTipoDetraccion**: Detraction type ID
+- **idPlan**: Pricing plan ID
+- **idListaPrecio**: Price list ID
+- **planNombre**: Plan name for display
+</Accordion>
+
+<Accordion title="Extra Charges">
+Additional charges for different delivery types:
+
+- **extraDomDom**: Domicilio a Domicilio (Home to Home)
+- **extraAgeDom**: Agencia a Domicilio (Branch to Home)
+- **extraDomAge**: Domicilio a Agencia (Home to Branch)
+
+Values are integers representing percentage or flat fee.
+</Accordion>
+
+## Usage Examples
+
+### Create New Customer
+
+```dart
+final customer = Customer(
+  nroDocumento: '12345678',
+  nombres: 'Juan Pérez García',
+  celular: '987654321',
+  idDistrito: 140101,
+  tipoCliente: 'Natural',
+  tipoPago: 'Efectivo',
+  igv: 1,
+  idPlan: 1,
+  extraDomDom: 5,
+  extraAgeDom: 3,
+  extraDomAge: 3,
+  direcciones: [
+    Direccion(
+      direccion: 'Av. Principal 123, Lima',
+      referencia: 'Frente al parque',
+    ),
+  ],
+);
+
+try {
+  await customerService.createCustomer(customer);
+  print('Customer created successfully');
+} catch (e) {
+  print('Error: $e');
+}
+```
+
+### Update Existing Customer
+
+```dart
+final updatedCustomer = customer.copyWith(
+  celular: '912345678',
+  email: 'juan.perez@example.com',
+);
+
+await customerService.updateCustomer(updatedCustomer);
+```
+
+### Add New Address
+
+```dart
+// Add new address to existing customer
+customer.direcciones.add(
+  Direccion(
+    direccion: 'Jr. Secundario 456, Callao',
+    referencia: 'Al lado del mercado',
+  ),
+);
+
+await customerService.addDireccion(customer.id!, customer);
+```
+
+### Search Customers
+
+```dart
+// Search by document number
+final results = await customerService.getCustomerByDocument('12345678');
+
+if (results.isNotEmpty) {
+  final customer = results.first;
+  print('Found: ${customer.nombres}');
+} else {
+  print('Customer not found');
+}
+```
+
+### Display Customer Card
+
+```dart
+Widget buildCustomerCard(Customer customer) {
+  return Card(
+    child: ListTile(
+      title: Text(customer.nombres ?? 'N/A'),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('DNI/RUC: ${customer.nroDocumento}'),
+          Text('Celular: ${customer.celular}'),
+          Text('Distrito: ${customer.distritoNombre}'),
+          Text('Plan: ${customer.planNombre}'),
+        ],
+      ),
+      trailing: Icon(Icons.arrow_forward_ios),
+      onTap: () {
+        // Navigate to customer details
+        Navigator.pushNamed(
+          context,
+          AppRoutes.editCustomer,
+          arguments: customer,
+        );
+      },
+    ),
+  );
+}
+```
+
+### Load Customer Details
+
+```dart
+final provider = context.read<CustomersProvider>();
+await provider.getClienteById(customerId);
+
+if (provider.customerById != null) {
+  final customer = provider.customerById!;
+  
+  // Access full details including addresses
+  print('Addresses: ${customer.direcciones.length}');
+  customer.direcciones.forEach((dir) {
+    print('- ${dir.direccion}');
+  });
+}
+```
+
+## Customer Types
+
+### Natural (Individual)
+
+```dart
+Customer(
+  tipoCliente: 'Natural',
+  nroDocumento: '12345678', // DNI (8 digits)
+  nombres: 'Juan Pérez',
+  // ...
+)
+```
+
+### Juridico (Corporate)
+
+```dart
+Customer(
+  tipoCliente: 'Juridico',
+  nroDocumento: '20123456789', // RUC (11 digits)
+  nombres: 'Empresa SAC',
+  razonSocial: 'Empresa de Servicios SAC',
+  idTipoDetraccion: 1,
+  // ...
+)
+```
+
+## Payment Types
+
+- **Efectivo**: Cash payment on delivery
+- **Credito**: Credit account (invoiced monthly)
+- **Deposito**: Bank transfer/deposit
+
+## IGV Configuration
+
+```dart
+// Include IGV in price calculations
+igv: 1  // Prices include 18% IGV
+
+// Exclude IGV (price is net)
+igv: 0  // IGV calculated separately
+```
+
+## Extra Charges Example
+
+```dart
+Customer(
+  extraDomDom: 5,  // +5% for home to home delivery
+  extraAgeDom: 3,  // +3% for branch to home delivery
+  extraDomAge: 3,  // +3% for home to branch delivery
+)
+
+// Used in price calculation:
+// Base price: 20.00
+// Delivery type: Domicilio a Domicilio
+// Final price: 20.00 + (20.00 * 0.05) = 21.00
+```
+
+## Related Models
+
+- **Direccion** - Customer address model
+- **Plan** - Pricing plan configuration
+- **TipoCliente** - Customer type enum
+- **TipoDetraccion** - Tax detraction configuration
+- [Encomienda Model](/development/models/encomienda) - Uses Customer as sender/recipient
+
+## Service Methods
+
+The `CustomerService` provides methods for customer operations:
+
+- `getCustomers()` - List customers by branch
+- `getCustomerById()` - Get full customer details
+- `getCustomerByDocument()` - Search by DNI/RUC
+- `createCustomer()` - Create new customer
+- `updateCustomer()` - Update customer info
+- `addDireccion()` - Add new address
+- `getTiposCliente()` - Get customer types
+
+See [Services Overview](/development/services/overview) for implementation details.

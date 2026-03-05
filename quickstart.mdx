@@ -1,80 +1,362 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick Start
+description: Get App Courier up and running in minutes
 ---
 
-## Get started in three steps
+This guide will help you get App Courier running on your local machine in just a few minutes.
 
-Get your documentation site running locally and make your first customization.
+## Prerequisites
 
-### Step 1: Set up your local environment
+Before you begin, ensure you have:
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
-
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+- Flutter SDK 3.7.2 or higher installed
+- Dart SDK (comes with Flutter)
+- Android Studio or Xcode (for mobile development)
+- Git installed
+- A code editor (VS Code, Android Studio, or IntelliJ recommended)
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  If you don't have Flutter installed, follow the [official Flutter installation guide](https://docs.flutter.dev/get-started/install) for your operating system.
+</Note>
+
+## Step 1: Verify Flutter Installation
+
+First, verify that Flutter is properly installed:
+
+```bash
+flutter --version
+```
+
+You should see output showing Flutter 3.7.2 or higher. Run the doctor command to check for any issues:
+
+```bash
+flutter doctor
+```
+
+Resolve any issues indicated by red ❌ marks before proceeding.
+
+## Step 2: Clone the Repository
+
+Clone the App Courier repository to your local machine:
+
+```bash
+git clone <repository-url>
+cd courier
+```
+
+<Note>
+  Replace `<repository-url>` with the actual repository URL provided by your team.
+</Note>
+
+## Step 3: Install Dependencies
+
+Install all required Flutter packages:
+
+```bash
+flutter pub get
+```
+
+This will download and install all dependencies defined in `pubspec.yaml`, including:
+
+- `dio` for HTTP requests
+- `provider` for state management
+- `shared_preferences` for local storage
+- `image_picker`, `fl_chart`, `pdf`, and more
+
+## Step 4: Configure API Endpoint (Optional)
+
+The app is pre-configured to connect to the production API. If you need to use a different API endpoint:
+
+<Steps>
+  <Step title="Open the API client file">
+    ```bash
+    # Open in your editor
+    lib/core/api/api_client.dart
+    ```
+  </Step>
+  
+  <Step title="Update the base URL">
+    Locate line 10 and update the `baseUrl`:
+    
+    ```dart
+    ApiClient() {
+      _dio = Dio(
+        BaseOptions(
+          baseUrl: 'https://your-api-endpoint.com', // Change this
+          validateStatus: (status) {
+            return status != null && status >= 200 && status < 300;
+          },
+          connectTimeout: const Duration(seconds: 20),
+          receiveTimeout: const Duration(seconds: 20),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+    }
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  The default API endpoint is `https://api.eisegmi.facturador.es`. Only change this if you're using a custom backend.
+</Warning>
+
+## Step 5: Set Up Device/Emulator
+
+You need either a physical device or an emulator to run the app.
+
+<Tabs>
+  <Tab title="Android">
+    ### Using Android Emulator
+    
+    1. Open Android Studio
+    2. Go to **Tools > Device Manager**
+    3. Create a new virtual device (or start an existing one)
+    4. Verify the emulator is running:
+    
+    ```bash
+    flutter devices
+    ```
+    
+    ### Using Physical Android Device
+    
+    1. Enable **Developer Options** on your Android device
+    2. Enable **USB Debugging**
+    3. Connect your device via USB
+    4. Verify the device is detected:
+    
+    ```bash
+    flutter devices
+    ```
+  </Tab>
+  
+  <Tab title="iOS">
+    ### Using iOS Simulator (macOS only)
+    
+    1. Open Xcode
+    2. Go to **Xcode > Open Developer Tool > Simulator**
+    3. Choose a simulator from the **Hardware > Device** menu
+    4. Verify the simulator is running:
+    
+    ```bash
+    flutter devices
+    ```
+    
+    ### Using Physical iOS Device (macOS only)
+    
+    1. Connect your iPhone/iPad via USB
+    2. Trust the computer on your device
+    3. Open `ios/Runner.xcworkspace` in Xcode
+    4. Configure signing under **Signing & Capabilities**
+    5. Verify the device is detected:
+    
+    ```bash
+    flutter devices
+    ```
+  </Tab>
+</Tabs>
+
+## Step 6: Run the Application
+
+Now you're ready to launch the app!
+
+```bash
+flutter run
+```
+
+This command will:
+
+1. Build the application
+2. Install it on your connected device/emulator
+3. Launch the app
+4. Enable hot reload for development
+
+<Note>
+  The first build may take several minutes. Subsequent builds will be much faster thanks to Flutter's caching.
+</Note>
+
+### Run Specific Platform
+
+To run on a specific device when multiple devices are connected:
+
+```bash
+# List all devices
+flutter devices
+
+# Run on specific device
+flutter run -d <device-id>
+
+# Example: Run on Chrome (for testing UI)
+flutter run -d chrome
+```
+
+## Step 7: Test the Application
+
+Once the app launches, you should see the **Font Page** (landing screen):
+
+<Steps>
+  <Step title="Landing Screen">
+    The app opens to a landing page where users can choose their login type:
+    - **Admin/Staff Login**: For administrators and staff members
+    - **Customer Login**: For customers to track their shipments
+  </Step>
+  
+  <Step title="Admin Login">
+    Try logging in with admin credentials:
+    - Navigate to Admin Login
+    - Enter your admin username and password
+    - Access the admin dashboard
+  </Step>
+  
+  <Step title="Customer Registration (Optional)">
+    Test the customer flow:
+    - Navigate to Customer Login
+    - Click "Register" to create a new customer account
+    - Complete the verification process
+    - Access the customer portal
+  </Step>
+</Steps>
+
+<Warning>
+  You'll need valid credentials from your backend system to fully test the application. Contact your system administrator for test accounts.
+</Warning>
+
+## Development Tools
+
+While the app is running, you have access to powerful development tools:
+
+### Hot Reload
+
+Make changes to your code and press `r` in the terminal to hot reload:
+
+```
+r - Hot reload (fast)
+R - Hot restart (slower, full restart)
+q - Quit
+```
+
+### Flutter DevTools
+
+Launch DevTools for debugging:
+
+```bash
+flutter pub global activate devtools
+flutter pub global run devtools
+```
+
+Then press `v` in the terminal running `flutter run` to open DevTools.
+
+### Logging
+
+View detailed logs:
+
+```bash
+flutter run --verbose
+```
+
+## Common Issues
+
+<AccordionGroup>
+  <Accordion title="Build fails with Gradle error">
+    **Solution**: Update Gradle and dependencies
+    
+    ```bash
+    cd android
+    ./gradlew clean
+    cd ..
+    flutter clean
+    flutter pub get
+    ```
+  </Accordion>
+  
+  <Accordion title="iOS build fails with CocoaPods error">
+    **Solution**: Update and reinstall pods
+    
+    ```bash
+    cd ios
+    rm -rf Pods Podfile.lock
+    pod install
+    cd ..
+    flutter clean
+    flutter pub get
+    ```
+  </Accordion>
+  
+  <Accordion title="Permission denied errors">
+    **Solution**: The app requires camera and storage permissions
+    
+    - Grant permissions when prompted on first launch
+    - On Android: Go to Settings > Apps > App Courier > Permissions
+    - On iOS: Go to Settings > App Courier > Enable required permissions
+  </Accordion>
+  
+  <Accordion title="API connection fails">
+    **Solution**: Check your API configuration
+    
+    - Verify the API endpoint in `lib/core/api/api_client.dart:10`
+    - Ensure your device has internet connectivity
+    - Check that the backend server is running and accessible
+    - Verify there are no firewall or network restrictions
+  </Accordion>
+  
+  <Accordion title="App crashes on startup">
+    **Solution**: Clear cache and rebuild
+    
+    ```bash
+    flutter clean
+    flutter pub get
+    flutter run
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Now that you have the app running, explore these resources:
+
+<CardGroup cols={2}>
+  <Card title="Installation Guide" icon="download" href="/installation">
+    Learn about detailed setup and configuration options
+  </Card>
+  <Card title="Architecture" icon="diagram-project" href="/introduction">
+    Understand the app's architecture and design patterns
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/auth/login">
+    Explore the backend API endpoints
+  </Card>
+  <Card title="Configuration" icon="gear" href="/configuration/api-setup">
+    Configure API connection
+  </Card>
+</CardGroup>
+
+## Running in Production
+
+To build a release version of the app:
+
+<CodeGroup>
+```bash Android
+# Build Android APK
+flutter build apk --release
+
+# Build Android App Bundle (recommended for Play Store)
+flutter build appbundle --release
+
+# APK location: build/app/outputs/flutter-apk/app-release.apk
+```
+
+```bash iOS
+# Build iOS (macOS only)
+flutter build ios --release
+
+# Then archive and upload via Xcode
+```
+</CodeGroup>
+
+<Note>
+  Before building for production, ensure you've:
+  - Updated version numbers in `pubspec.yaml`
+  - Configured signing certificates
+  - Set production API endpoints
+  - Tested thoroughly on multiple devices
 </Note>

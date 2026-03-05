@@ -1,0 +1,395 @@
+---
+title: "User Roles"
+description: "Three distinct user roles with tailored interfaces and permissions: Admin, Customer, and Driver"
+---
+
+## Overview
+
+App Courier supports three primary user roles, each with dedicated interfaces and permissions designed for their specific workflows.
+
+<CardGroup cols={3}>
+  <Card title="Admin" icon="shield" href="/guides/admin-guide">
+    Manage packages, customers, drivers, and branches
+  </Card>
+  <Card title="Customer" icon="user" href="/guides/customer-guide">
+    Request shipments and track packages
+  </Card>
+  <Card title="Driver" icon="id-card" href="/guides/driver-guide">
+    Accept and complete deliveries
+  </Card>
+</CardGroup>
+
+## Role Comparison
+
+| Feature | Admin | Customer | Driver |
+|---------|-------|----------|--------|
+| Create Packages | ✅ Full | ✅ Request | ❌ |
+| Track Packages | ✅ All | ✅ Own | ✅ Assigned |
+| Manage Customers | ✅ | ❌ | ❌ |
+| Assign Deliveries | ✅ | ❌ | ❌ |
+| Update Status | ✅ All | ❌ | ✅ Assigned |
+| View Dashboard | ✅ Full | ✅ Limited | ✅ Personal |
+| Manage Drivers | ✅ | ❌ | ❌ |
+| View Analytics | ✅ | ❌ | ✅ Personal |
+| Upload Photos | ✅ | ❌ | ✅ |
+| Generate Reports | ✅ | ❌ | ❌ |
+
+## Admin Role
+
+### User Types
+
+Admins can have different types within the system:
+
+```dart
+// User type IDs in the system
+1: Super Admin
+2: Branch Manager  
+3: Staff/Employee
+```
+
+### Admin Capabilities
+
+<AccordionGroup>
+  <Accordion title="Package Management">
+    - Create new packages
+    - View all packages across branches
+    - Update package status
+    - Assign packages to drivers
+    - View package history and images
+    - Generate shipping labels
+  </Accordion>
+  
+  <Accordion title="Customer Management">
+    - Create and edit customer profiles
+    - Manage customer addresses
+    - Configure customer pricing plans
+    - View customer shipping history
+    - Search and filter customers
+  </Accordion>
+  
+  <Accordion title="Driver Management">
+    - View all drivers at branch
+    - Assign packages to drivers
+    - Track driver performance
+    - View driver delivery history
+    - Manage driver accounts
+  </Accordion>
+  
+  <Accordion title="Dashboard & Analytics">
+    - View daily/weekly/monthly metrics
+    - Package counts by status
+    - Revenue reports
+    - Branch performance
+    - Customer analytics
+  </Accordion>
+  
+  <Accordion title="System Configuration">
+    - Manage branches
+    - Configure pricing plans
+    - Set up payment types
+    - Configure delivery types
+    - User account management
+  </Accordion>
+</AccordionGroup>
+
+### Admin Interface
+
+The admin panel has four main modules:
+
+```dart
+final List<Widget> _screens = [
+  const DashboardScreen(),    // Analytics and metrics
+  const CustomerScreen(),     // Customer management  
+  const EncomiendaScreen(),  // Package management
+  const MotorizadosScreen(), // Driver management
+];
+```
+
+### Admin Authentication
+
+Admins login with:
+- Email address
+- Password
+- Branch assignment (automatic)
+
+```dart
+POST /auth/login
+{
+  "email": "admin@example.com",
+  "password": "password123"
+}
+```
+
+## Customer Role
+
+### Customer Types
+
+<Tabs>
+  <Tab title="Natural (Individual)">
+    Personal customers:
+    - Individual users
+    - DNI identification
+    - Basic features
+    - Standard pricing
+  </Tab>
+  
+  <Tab title="Jurídico (Business)">
+    Business customers:
+    - Companies/organizations
+    - RUC identification  
+    - Advanced features
+    - Custom pricing plans
+    - Credit terms
+    - IGV configuration
+  </Tab>
+</Tabs>
+
+### Customer Capabilities
+
+<AccordionGroup>
+  <Accordion title="Package Tracking">
+    - Track packages by remito number
+    - View package status and history
+    - See estimated delivery dates
+    - View delivery photos
+  </Accordion>
+  
+  <Accordion title="Shipment Requests">
+    - Request new shipments
+    - Provide sender/recipient details
+    - Select delivery options
+    - View price estimates
+    - Submit request for admin processing
+  </Accordion>
+  
+  <Accordion title="Profile Management">
+    - Update contact information
+    - Manage delivery addresses
+    - Change password
+    - View shipping history
+  </Accordion>
+  
+  <Accordion title="Dashboard">
+    - View recent shipments
+    - Track active packages
+    - Access shipment history
+    - Quick search
+  </Accordion>
+</AccordionGroup>
+
+### Customer Interface
+
+Customer app modules:
+
+```dart
+Routes:
+- Dashboard (modulesCliente)
+- Request Shipment (solicitarEnvio)
+- Pending Requests (solicitudesEnvio)  
+- Completed Requests (solicitudesAtendidas)
+- Profile (userClienteDetail)
+```
+
+### Customer Authentication
+
+Customers login with:
+- Username (usuario) or email
+- Password
+
+```dart
+POST /auth/loginCliente
+{
+  "usuario": "customer123",
+  "password": "password123"
+}
+```
+
+### Customer Registration
+
+Customers can self-register:
+
+<Steps>
+  <Step title="Enter Email">
+    Provide name and email address
+  </Step>
+  
+  <Step title="Verify Email">
+    Receive and enter verification code
+  </Step>
+  
+  <Step title="Create Account">
+    Set password and complete profile
+  </Step>
+  
+  <Step title="Start Using">
+    Request shipments and track packages
+  </Step>
+</Steps>
+
+## Driver Role
+
+### Driver Types
+
+```dart
+// User type IDs for drivers
+4: Primary Driver (Motorizado Principal)
+5: Secondary Driver (Motorizado Secundario)
+```
+
+### Driver Capabilities
+
+<AccordionGroup>
+  <Accordion title="View Assignments">
+    - See assigned packages
+    - View delivery addresses
+    - Access customer contact info
+    - Check package details
+  </Accordion>
+  
+  <Accordion title="Update Deliveries">
+    - Update package status
+    - Mark as delivered
+    - Return undeliverable packages
+    - Add delivery notes
+  </Accordion>
+  
+  <Accordion title="Proof of Delivery">
+    - Take delivery photos
+    - Upload images
+    - Document package condition
+    - Confirm delivery location
+  </Accordion>
+  
+  <Accordion title="Performance Tracking">
+    - View completed deliveries
+    - Check daily statistics
+    - Access delivery history
+    - Review assigned packages
+  </Accordion>
+</AccordionGroup>
+
+### Driver Interface
+
+Driver app modules:
+
+```dart
+Modules:
+- Dashboard: Performance metrics and statistics
+- Encomiendas: View and manage assigned packages
+```
+
+### Driver Assignment
+
+Drivers are assigned packages by admins:
+
+```dart
+POST /encomienda/addMotorizados
+{
+  "id_encomienda": 123,
+  "motorizados": [4, 8]  // Driver user IDs
+}
+```
+
+Multiple drivers can be assigned to one package:
+- **Primary Driver**: Main responsible driver
+- **Secondary Driver**: Backup or assistant
+
+## Authentication Sessions
+
+All roles receive a JWT token upon login:
+
+```dart
+class AuthSession {
+  int? id;
+  int? idUsuario;
+  String? nombres;
+  String? email;
+  int? idTipoUsuario;  // Role: 1-3 (Admin), Customer, 4-5 (Driver)
+  int? idSucursal;     // Branch ID (for admin/driver)
+  String? token;       // JWT authentication token
+}
+```
+
+### Token Usage
+
+The token is included in all API requests:
+
+```dart
+headers: {
+  'Authorization': 'Bearer $token'
+}
+```
+
+<Warning>
+  Tokens expire after a period of inactivity. Users must login again if token expires (401 error).
+</Warning>
+
+## Permission Matrix
+
+### Package Operations
+
+| Operation | Admin | Customer | Driver |
+|-----------|-------|----------|--------|
+| Create | ✅ | Request only | ❌ |
+| View All | ✅ | ❌ | ❌ |
+| View Own | ✅ | ✅ | ✅ Assigned |
+| Update Status | ✅ | ❌ | ✅ Assigned |
+| Assign Driver | ✅ | ❌ | ❌ |
+| Delete | ✅ | ❌ | ❌ |
+
+### Customer Operations
+
+| Operation | Admin | Customer | Driver |
+|-----------|-------|----------|--------|
+| Create | ✅ | Self only | ❌ |
+| View All | ✅ | ❌ | ❌ |
+| View Own | ✅ | ✅ | ❌ |
+| Update | ✅ | Self only | ❌ |
+| Delete | ✅ | ❌ | ❌ |
+
+### System Operations
+
+| Operation | Admin | Customer | Driver |
+|-----------|-------|----------|--------|
+| Manage Branches | ✅ | ❌ | ❌ |
+| Configure Plans | ✅ | ❌ | ❌ |
+| View Analytics | ✅ Full | ❌ | ✅ Personal |
+| Manage Users | ✅ | ❌ | ❌ |
+| Generate Reports | ✅ | ❌ | ❌ |
+
+## Best Practices
+
+<Tip>
+  **Assign appropriate roles**: Ensure users have the minimum permissions needed for their job function.
+</Tip>
+
+<Note>
+  **Train users on their interface**: Each role has a tailored interface. Provide role-specific training.
+</Note>
+
+<Warning>
+  **Protect admin credentials**: Admin accounts have full system access. Use strong passwords and never share credentials.
+</Warning>
+
+## Role-Specific Documentation
+
+Detailed guides for each role:
+
+<CardGroup cols={3}>
+  <Card title="Admin Guide" icon="book" href="/guides/admin-guide">
+    Complete guide for administrators
+  </Card>
+  <Card title="Customer Guide" icon="book" href="/guides/customer-guide">
+    Help for customers using the app
+  </Card>
+  <Card title="Driver Guide" icon="book" href="/guides/driver-guide">
+    Instructions for delivery drivers
+  </Card>
+</CardGroup>
+
+## See Also
+
+- [Authentication API](/api/auth/login)
+- [Package Management](/features/package-management)
+- [Customer Management](/features/customer-management)
+- [Delivery Tracking](/features/delivery-tracking)

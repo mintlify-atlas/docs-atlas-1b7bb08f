@@ -1,0 +1,326 @@
+---
+title: 'List Customers'
+description: 'Retrieve and search customer information'
+icon: 'list'
+---
+
+## List Customers
+
+Retrieve all customers for a specific branch.
+
+<CodeGroup>
+```http Request
+POST /clientes/getClientes
+Content-Type: application/json
+
+{
+  "id_sucursal": 1
+}
+```
+
+```json Response
+{
+  "data": [
+    {
+      "id": 1,
+      "nombre": "Juan Pérez",
+      "numero_documento": "12345678",
+      "celular": "987654321",
+      "tipo_cliente": "Natural",
+      "tipo_pago": "Contado",
+      "incluye_igv": 1,
+      "id_distrito": 150101,
+      "distrito_nombre": "Lima",
+      "plan_nombre": "Básico",
+      "lat": "-12.0464",
+      "lon": "-77.0428",
+      "extra_domdom": 5,
+      "extra_domage": 3,
+      "extra_agedom": 3
+    }
+  ]
+}
+```
+</CodeGroup>
+
+### Request Parameters
+
+<ParamField body="id_sucursal" type="integer" required>
+  Branch ID to filter customers
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="data" type="array">
+  Array of customer objects
+
+  <Expandable title="Customer Object">
+    <ResponseField name="id" type="integer">
+      Customer unique identifier
+    </ResponseField>
+
+    <ResponseField name="nombre" type="string">
+      Customer full name
+    </ResponseField>
+
+    <ResponseField name="numero_documento" type="string">
+      Document number (DNI/RUC)
+    </ResponseField>
+
+    <ResponseField name="celular" type="string">
+      Mobile phone number
+    </ResponseField>
+
+    <ResponseField name="tipo_cliente" type="string">
+      Customer type (e.g., "Natural", "Jurídico")
+    </ResponseField>
+
+    <ResponseField name="tipo_pago" type="string">
+      Payment type
+    </ResponseField>
+
+    <ResponseField name="incluye_igv" type="integer">
+      Includes IGV (tax): 1 = yes, 0 = no
+    </ResponseField>
+
+    <ResponseField name="id_distrito" type="integer">
+      District ID
+    </ResponseField>
+
+    <ResponseField name="distrito_nombre" type="string">
+      District name
+    </ResponseField>
+
+    <ResponseField name="plan_nombre" type="string">
+      Price plan name
+    </ResponseField>
+
+    <ResponseField name="lat" type="string">
+      Latitude coordinate
+    </ResponseField>
+
+    <ResponseField name="lon" type="string">
+      Longitude coordinate
+    </ResponseField>
+
+    <ResponseField name="extra_domdom" type="integer">
+      Extra charge for home-to-home delivery
+    </ResponseField>
+
+    <ResponseField name="extra_domage" type="integer">
+      Extra charge for home-to-agency delivery
+    </ResponseField>
+
+    <ResponseField name="extra_agedom" type="integer">
+      Extra charge for agency-to-home delivery
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## Get Customer by ID
+
+Retrieve detailed information for a specific customer, including addresses.
+
+<CodeGroup>
+```http Request
+GET /clientes/getClienteById?id=1
+```
+
+```json Response
+{
+  "data": {
+    "id": 1,
+    "nombre": "Juan Pérez",
+    "numero_documento": "12345678",
+    "celular": "987654321",
+    "tipo_cliente": "Natural",
+    "tipo_pago": "Contado",
+    "incluye_igv": 1,
+    "id_distrito": 150101,
+    "distrito_nombre": "Lima",
+    "provincia_nombre": "Lima",
+    "departamento_nombre": "Lima",
+    "plan_nombre": "Básico",
+    "id_lista_precio": 1,
+    "id_tipo_detraccion": 1,
+    "lat": "-12.0464",
+    "lon": "-77.0428",
+    "extra_domdom": 5,
+    "extra_domage": 3,
+    "extra_agedom": 3,
+    "direcciones": [
+      {
+        "id": 1,
+        "direccion": "Av. Javier Prado 123",
+        "referencia": "Cerca al centro comercial"
+      }
+    ]
+  }
+}
+```
+</CodeGroup>
+
+### Query Parameters
+
+<ParamField query="id" type="integer" required>
+  Customer ID to retrieve
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="data" type="object">
+  Customer details object
+
+  <Expandable title="Properties">
+    <ResponseField name="id" type="integer">
+      Customer unique identifier
+    </ResponseField>
+
+    <ResponseField name="nombre" type="string">
+      Customer full name
+    </ResponseField>
+
+    <ResponseField name="numero_documento" type="string">
+      Document number (DNI/RUC)
+    </ResponseField>
+
+    <ResponseField name="celular" type="string">
+      Mobile phone number
+    </ResponseField>
+
+    <ResponseField name="tipo_cliente" type="string">
+      Customer type
+    </ResponseField>
+
+    <ResponseField name="tipo_pago" type="string">
+      Payment type
+    </ResponseField>
+
+    <ResponseField name="incluye_igv" type="integer">
+      Includes IGV (tax): 1 = yes, 0 = no
+    </ResponseField>
+
+    <ResponseField name="id_distrito" type="integer">
+      District ID
+    </ResponseField>
+
+    <ResponseField name="distrito_nombre" type="string">
+      District name
+    </ResponseField>
+
+    <ResponseField name="provincia_nombre" type="string">
+      Province name
+    </ResponseField>
+
+    <ResponseField name="departamento_nombre" type="string">
+      Department (state) name
+    </ResponseField>
+
+    <ResponseField name="plan_nombre" type="string">
+      Price plan name
+    </ResponseField>
+
+    <ResponseField name="id_lista_precio" type="integer">
+      Price list ID
+    </ResponseField>
+
+    <ResponseField name="id_tipo_detraccion" type="integer">
+      Detraction type ID
+    </ResponseField>
+
+    <ResponseField name="lat" type="string">
+      Latitude coordinate
+    </ResponseField>
+
+    <ResponseField name="lon" type="string">
+      Longitude coordinate
+    </ResponseField>
+
+    <ResponseField name="extra_domdom" type="integer">
+      Extra charge for home-to-home delivery
+    </ResponseField>
+
+    <ResponseField name="extra_domage" type="integer">
+      Extra charge for home-to-agency delivery
+    </ResponseField>
+
+    <ResponseField name="extra_agedom" type="integer">
+      Extra charge for agency-to-home delivery
+    </ResponseField>
+
+    <ResponseField name="direcciones" type="array">
+      Array of customer addresses
+
+      <Expandable title="Address Object">
+        <ResponseField name="id" type="integer">
+          Address unique identifier
+        </ResponseField>
+
+        <ResponseField name="direccion" type="string">
+          Full address
+        </ResponseField>
+
+        <ResponseField name="referencia" type="string">
+          Reference or landmark
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## Search Customer
+
+Search for customers by document number or name.
+
+<CodeGroup>
+```http Request
+GET /clientes/buscarCliente?busqueda=12345678
+```
+
+```json Response
+{
+  "data": [
+    {
+      "id": 1,
+      "nombre": "Juan Pérez",
+      "numero_documento": "12345678"
+    },
+    {
+      "id": 2,
+      "nombre": "Juan García",
+      "numero_documento": "87654321"
+    }
+  ]
+}
+```
+</CodeGroup>
+
+### Query Parameters
+
+<ParamField query="busqueda" type="string" required>
+  Search term (document number or name)
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="data" type="array">
+  Array of matching customers
+
+  <Expandable title="Customer Object">
+    <ResponseField name="id" type="integer">
+      Customer unique identifier
+    </ResponseField>
+
+    <ResponseField name="nombre" type="string">
+      Customer full name
+    </ResponseField>
+
+    <ResponseField name="numero_documento" type="string">
+      Document number (DNI/RUC)
+    </ResponseField>
+  </Expandable>
+</ResponseField>

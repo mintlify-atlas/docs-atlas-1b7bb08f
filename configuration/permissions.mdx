@@ -1,0 +1,412 @@
+---
+title: 'Permissions Configuration'
+description: 'Configure Android and iOS permissions for camera, storage, and other features'
+icon: 'shield-check'
+---
+
+## Overview
+
+App Courier requires specific permissions to access device features like camera, storage, and network. This guide covers how to configure permissions for both Android and iOS platforms.
+
+## Required Dependencies
+
+The following packages in `pubspec.yaml` require permissions:
+
+```yaml
+dependencies:
+  permission_handler: ^12.0.1  # Runtime permission management
+  image_picker: ^1.2.1         # Camera and gallery access
+  path_provider: ^2.1.5        # File system access
+```
+
+## Android Permissions
+
+Android permissions are declared in `android/app/src/main/AndroidManifest.xml`.
+
+### Current Permissions
+
+```xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Internet access for API communication -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    
+    <!-- Camera access for taking photos -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    
+    <!-- Storage access for Android 12 and below -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    
+    <!-- Storage access for Android 13+ -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+</manifest>
+```
+
+### Permission Breakdown
+
+<AccordionGroup>
+  <Accordion title="INTERNET" icon="wifi">
+    **Purpose:** Allows the app to access the network for API calls.
+    
+    **Required for:**
+    - Making HTTP/HTTPS requests
+    - Downloading/uploading data
+    - API communication
+    
+    **Protection Level:** Normal (automatically granted)
+  </Accordion>
+  
+  <Accordion title="CAMERA" icon="camera">
+    **Purpose:** Allows the app to access device camera.
+    
+    **Required for:**
+    - Taking photos for delivery proof
+    - Scanning barcodes/QR codes
+    - Document capture
+    
+    **Protection Level:** Dangerous (requires runtime permission)
+    
+    <Warning>
+      Users must explicitly grant camera permission at runtime. The app should handle denial gracefully.
+    </Warning>
+  </Accordion>
+  
+  <Accordion title="READ_EXTERNAL_STORAGE / WRITE_EXTERNAL_STORAGE" icon="folder">
+    **Purpose:** Allows reading and writing files to external storage.
+    
+    **Required for:**
+    - Accessing photos from gallery
+    - Saving documents locally
+    - Caching data
+    
+    **Protection Level:** Dangerous (requires runtime permission)
+    
+    **Android Version:** Used on Android 12 (API 31) and below
+    
+    <Info>
+      These permissions are deprecated on Android 13+ and replaced by granular media permissions.
+    </Info>
+  </Accordion>
+  
+  <Accordion title="READ_MEDIA_IMAGES" icon="image">
+    **Purpose:** Granular permission for accessing image files.
+    
+    **Required for:**
+    - Selecting images from gallery
+    - Accessing user photos
+    
+    **Protection Level:** Dangerous (requires runtime permission)
+    
+    **Android Version:** Android 13 (API 33) and above
+  </Accordion>
+</AccordionGroup>
+
+### Android API Level Handling
+
+The app handles storage permissions differently based on Android version:
+
+```dart
+import 'package:permission_handler/permission_handler.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+
+Future<bool> requestStoragePermission() async {
+  if (Platform.isAndroid) {
+    final androidInfo = await DeviceInfoPlugin().androidInfo;
+    
+    if (androidInfo.version.sdkInt >= 33) {
+      // Android 13+: Request granular media permission
+      final status = await Permission.photos.request();
+      return status.isGranted;
+    } else {
+      // Android 12 and below: Request legacy storage permission
+      final status = await Permission.storage.request();
+      return status.isGranted;
+    }
+  }
+  return true;
+}
+```
+
+## iOS Permissions
+
+iOS permissions are declared in `ios/Runner/Info.plist` with usage descriptions.
+
+### Required Configuration
+
+<Warning>
+  iOS requires usage descriptions for all dangerous permissions. The app will crash if you request a permission without its corresponding usage description.
+</Warning>
+
+Add these entries to `Info.plist`:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Camera Access -->
+    <key>NSCameraUsageDescription</key>
+    <string>App Courier needs access to your camera to take photos of deliveries and documents.</string>
+    
+    <!-- Photo Library Access -->
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>App Courier needs access to your photo library to select images for deliveries.</string>
+    
+    <!-- Photo Library Add (Save Photos) -->
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>App Courier needs permission to save photos to your library.</string>
+    
+    <!-- Existing configuration -->
+    <key>CFBundleDisplayName</key>
+    <string>Courier</string>
+    <!-- ... other keys ... -->
+</dict>
+</plist>
+```
+
+### iOS Usage Descriptions
+
+<ParamField path="NSCameraUsageDescription" type="String" required>
+  Explains why the app needs camera access. Shown to users when requesting camera permission.
+</ParamField>
+
+<ParamField path="NSPhotoLibraryUsageDescription" type="String" required>
+  Explains why the app needs to read from the photo library. Required for `image_picker`.
+</ParamField>
+
+<ParamField path="NSPhotoLibraryAddUsageDescription" type="String">
+  Explains why the app needs to save photos to the library. Required if saving images.
+</ParamField>
+
+<Tip>
+  Make usage descriptions clear and specific. Generic descriptions may be rejected during App Store review.
+</Tip>
+
+## Runtime Permission Handling
+
+Use the `permission_handler` package to request permissions at runtime.
+
+### Requesting Camera Permission
+
+```dart
+import 'package:permission_handler/permission_handler.dart';
+
+Future<bool> requestCameraPermission() async {
+  final status = await Permission.camera.request();
+  
+  if (status.isGranted) {
+    // Permission granted, proceed with camera
+    return true;
+  } else if (status.isDenied) {
+    // Permission denied, show explanation
+    showPermissionDeniedDialog();
+    return false;
+  } else if (status.isPermanentlyDenied) {
+    // User permanently denied, open app settings
+    openAppSettings();
+    return false;
+  }
+  
+  return false;
+}
+```
+
+### Requesting Storage/Photos Permission
+
+```dart
+import 'package:permission_handler/permission_handler.dart';
+
+Future<bool> requestStoragePermission() async {
+  final status = await Permission.photos.request();
+  
+  if (status.isGranted) {
+    return true;
+  } else if (status.isPermanentlyDenied) {
+    // Open app settings
+    await openAppSettings();
+    return false;
+  }
+  
+  return false;
+}
+```
+
+### Checking Permission Status
+
+```dart
+Future<void> checkCameraPermission() async {
+  final status = await Permission.camera.status;
+  
+  if (status.isGranted) {
+    // Permission already granted
+  } else if (status.isDenied) {
+    // Permission not yet requested or denied
+  } else if (status.isPermanentlyDenied) {
+    // User permanently denied permission
+  } else if (status.isRestricted) {
+    // iOS only: Permission restricted by device policy
+  }
+}
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Request in Context" icon="hand-pointer">
+    Only request permissions when the user attempts to use a feature that requires it. Don't request all permissions on app launch.
+  </Card>
+  
+  <Card title="Explain the Why" icon="circle-info">
+    Show a dialog explaining why the permission is needed before requesting it. This increases grant rates.
+  </Card>
+  
+  <Card title="Handle Denial" icon="circle-xmark">
+    Gracefully handle permission denial. Provide alternative workflows or disable features that require the permission.
+  </Card>
+  
+  <Card title="Settings Redirect" icon="gear">
+    If permission is permanently denied, guide users to app settings where they can manually grant it.
+  </Card>
+</CardGroup>
+
+## Complete Permission Flow Example
+
+```dart
+import 'package:permission_handler/permission_handler.dart';
+import 'package:image_picker/image_picker.dart';
+
+class CameraService {
+  final ImagePicker _picker = ImagePicker();
+  
+  Future<XFile?> takePicture() async {
+    // Check current permission status
+    final status = await Permission.camera.status;
+    
+    if (status.isGranted) {
+      // Permission already granted, take picture
+      return await _picker.pickImage(source: ImageSource.camera);
+    }
+    
+    // Show explanation dialog
+    final shouldRequest = await _showPermissionRationale();
+    
+    if (!shouldRequest) {
+      return null;
+    }
+    
+    // Request permission
+    final result = await Permission.camera.request();
+    
+    if (result.isGranted) {
+      // Permission granted, take picture
+      return await _picker.pickImage(source: ImageSource.camera);
+    } else if (result.isPermanentlyDenied) {
+      // Show settings dialog
+      await _showSettingsDialog();
+      return null;
+    }
+    
+    // Permission denied
+    return null;
+  }
+  
+  Future<bool> _showPermissionRationale() async {
+    // Show dialog explaining why camera is needed
+    // Return true if user wants to proceed
+    return true;
+  }
+  
+  Future<void> _showSettingsDialog() async {
+    // Show dialog with option to open settings
+    await openAppSettings();
+  }
+}
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="App crashes when requesting permission (iOS)">
+    **Cause:** Missing usage description in `Info.plist`
+    
+    **Solution:**
+    - Add the appropriate `NS*UsageDescription` key to `Info.plist`
+    - Make sure the description is not empty
+    - Clean and rebuild the app
+  </Accordion>
+  
+  <Accordion title="Permission dialog doesn't appear (Android)">
+    **Cause:** Permission not declared in `AndroidManifest.xml` or already permanently denied
+    
+    **Solution:**
+    - Verify permission is in the manifest
+    - Check permission status before requesting
+    - Uninstall and reinstall the app to reset permissions
+    - Guide user to app settings if permanently denied
+  </Accordion>
+  
+  <Accordion title="Storage permission not working on Android 13+">
+    **Cause:** Using legacy storage permissions on Android 13+
+    
+    **Solution:**
+    - Use `Permission.photos` instead of `Permission.storage`
+    - Add `READ_MEDIA_IMAGES` to AndroidManifest.xml
+    - Check Android API level and request appropriate permission
+  </Accordion>
+  
+  <Accordion title="Permission works on Android but not iOS">
+    **Cause:** Platform-specific permission configuration missing
+    
+    **Solution:**
+    - Ensure `Info.plist` has all required usage descriptions
+    - Check iOS simulator/device system settings
+    - Reset all permissions: Settings → General → Transfer or Reset → Reset Location & Privacy
+  </Accordion>
+</AccordionGroup>
+
+## Additional Permissions
+
+If your app needs additional permissions in the future:
+
+### Location Permission
+
+**Android (`AndroidManifest.xml`):**
+```xml
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+```
+
+**iOS (`Info.plist`):**
+```xml
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>We need your location to show nearby delivery points.</string>
+```
+
+**Request:**
+```dart
+final status = await Permission.location.request();
+```
+
+### Notification Permission (Android 13+)
+
+**Android (`AndroidManifest.xml`):**
+```xml
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+```
+
+**Request:**
+```dart
+final status = await Permission.notification.request();
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Environment Config" icon="gear" href="/configuration/environment">
+    Configure environment variables and build modes
+  </Card>
+  
+  <Card title="API Setup" icon="plug" href="/configuration/api-setup">
+    Set up backend API connection and authentication
+  </Card>
+</CardGroup>

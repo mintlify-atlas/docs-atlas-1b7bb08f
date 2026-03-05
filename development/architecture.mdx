@@ -1,0 +1,251 @@
+---
+title: App Architecture
+description: Overall architecture and design patterns used in App Courier
+---
+
+## Overview
+
+App Courier follows a clean, layered architecture pattern built with Flutter. The app uses the Provider pattern for state management and separates concerns into distinct layers: UI (screens), business logic (providers), data access (services), and data models.
+
+## Architecture Layers
+
+```
+┌─────────────────────────────────────┐
+│         Presentation Layer          │
+│    (Screens, Widgets, Routes)       │
+└─────────────────────────────────────┘
+                 ↓
+┌─────────────────────────────────────┐
+│         Business Logic Layer        │
+│          (Providers/State)          │
+└─────────────────────────────────────┘
+                 ↓
+┌─────────────────────────────────────┐
+│         Service Layer               │
+│      (API Communication)            │
+└─────────────────────────────────────┘
+                 ↓
+┌─────────────────────────────────────┐
+│         Data Layer                  │
+│      (Models, API Client)           │
+└─────────────────────────────────────┘
+```
+
+## Key Design Patterns
+
+### 1. Provider Pattern
+
+The app uses Flutter's Provider package for state management. All providers extend `ChangeNotifier` and notify listeners when state changes.
+
+**Example from main.dart:**
+
+```dart
+runApp(
+  MultiProvider(
+    providers: [
+      ChangeNotifierProvider(
+        create: (_) => AuthProvider(AuthService(apiClient)),
+      ),
+      ChangeNotifierProvider(
+        create: (_) => CustomersProvider(CustomerService(apiClient)),
+      ),
+      ChangeNotifierProvider(
+        create: (_) => EncomiendasProvider(EncomiendaService(apiClient)),
+      ),
+      // ... more providers
+    ],
+    child: const MyApp(),
+  ),
+);
+```
+
+### 2. Service Layer Pattern
+
+Each domain (customers, encomiendas, etc.) has a dedicated service class that handles API communication. Services receive an `ApiClient` instance via dependency injection.
+
+```dart
+class CustomerService {
+  final ApiClient api;
+
+  CustomerService(this.api);
+
+  Future<List<Customer>> getCustomers(int idSucursal) async {
+    final response = await api.post(
+      ApiEndpoints.clientes,
+      data: {'id_sucursal': idSucursal},
+    );
+    // Parse and return data
+  }
+}
+```
+
+### 3. Repository Pattern
+
+Providers act as repositories, managing state and coordinating between the UI and services:
+
+```dart
+class CustomersProvider extends ChangeNotifier {
+  final CustomerService _service;
+  List<Customer> _customers = [];
+  bool _isLoading = false;
+
+  Future<void> getClientes(int idSucursal) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      _customers = await _service.getCustomers(idSucursal);
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+}
+```
+
+## Application Initialization
+
+The app initializes in `main.dart` following this sequence:
+
+```dart
+void main() async {
+  // 1. Initialize Flutter bindings
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 2. Lock orientation to portrait
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
+
+  // 3. Create singleton API client
+  final apiClient = ApiClient();
+
+  // 4. Initialize providers with services
+  runApp(
+    MultiProvider(
+      providers: [/* ... */],
+      child: const MyApp(),
+    ),
+  );
+}
+```
+
+## Routing Strategy
+
+The app uses named routes defined in `AppRoutes` class:
+
+```dart
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      initialRoute: AppRoutes.fontPage,
+      routes: AppRoutes.routes,
+    );
+  }
+}
+```
+
+Routes support parameterized navigation:
+
+```dart
+// Navigate with arguments
+Navigator.pushNamed(
+  context,
+  AppRoutes.editCustomer,
+  arguments: customer,
+);
+
+// Receive arguments in route
+editCustomer: (context) {
+  final customer = ModalRoute.of(context)!.settings.arguments as Customer;
+  return EditCustomerScreen(customer: customer);
+}
+```
+
+## API Communication
+
+All HTTP requests go through the centralized `ApiClient` class:
+
+- **Base URL**: `https://api.eisegmi.facturador.es`
+- **Authentication**: JWT tokens stored in SharedPreferences
+- **Interceptors**: Automatic token injection and 401 handling
+- **Timeout**: 20 seconds for both connect and receive
+
+See [API Client](/development/services/api-client) for detailed implementation.
+
+## Module Structure
+
+The app supports three user types, each with dedicated modules:
+
+### 1. Admin Module
+- Customer management (CRUD operations)
+- Encomienda creation and tracking
+- User management
+- Dashboard with statistics
+
+### 2. Client Module  
+- Request shipping services
+- Track encomiendas
+- View solicitud history
+
+### 3. Motorizado (Driver) Module
+- View assigned encomiendas
+- Update encomienda status
+- Upload delivery photos
+
+## Error Handling
+
+Error handling follows a consistent pattern across the app:
+
+```dart
+try {
+  _data = await _service.getData();
+} catch (e) {
+  _error = e.toString();
+  rethrow; // Optional: re-throw for UI to handle
+} finally {
+  _isLoading = false;
+  notifyListeners();
+}
+```
+
+Services extract user-friendly error messages from API responses:
+
+```dart
+on DioException catch (e) {
+  throw extractErrorMessage(e.response?.data);
+} catch (_) {
+  throw Exception("Error inesperado");
+}
+```
+
+## Key Architectural Decisions
+
+<Accordion title="Why Provider over other state management solutions?">
+Provider was chosen for its simplicity, official Flutter team support, and sufficient capabilities for the app's requirements. It integrates well with Flutter's widget tree and has minimal boilerplate.
+</Accordion>
+
+<Accordion title="Why separate Service and Provider layers?">
+Separating services from providers follows the Single Responsibility Principle:
+- **Services**: Handle API communication and data transformation
+- **Providers**: Manage state, loading states, and coordinate UI updates
+
+This separation makes testing easier and allows service reuse across multiple providers.
+</Accordion>
+
+<Accordion title="Why single ApiClient instance?">
+A singleton ApiClient ensures:
+- Consistent configuration across all services
+- Shared interceptors for authentication
+- Efficient connection pooling
+- Centralized request/response logging
+</Accordion>
+
+## Next Steps
+
+- Learn about [State Management](/development/state-management) patterns
+- Explore the [Folder Structure](/development/folder-structure)
+- Review [Services Architecture](/development/services/overview)

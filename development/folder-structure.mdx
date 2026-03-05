@@ -1,0 +1,441 @@
+---
+title: Folder Structure
+description: Detailed explanation of the App Courier codebase organization
+---
+
+## Overview
+
+The App Courier codebase follows a modular, feature-based structure within the `lib/` directory. Each module has a clear responsibility, making the codebase maintainable and scalable.
+
+## Root Structure
+
+```
+lib/
+├── app.dart                 # Main app widget
+├── main.dart                # App entry point
+├── core/                    # Shared utilities and infrastructure
+├── data/                    # Data sources and mocks
+├── models/                  # Data models
+├── providers/               # State management
+├── routes/                  # Navigation configuration
+├── screens/                 # UI screens
+└── services/                # API communication
+```
+
+## Core Directory
+
+The `core/` directory contains shared infrastructure used throughout the app:
+
+```
+core/
+├── api/
+│   ├── api_client.dart           # HTTP client wrapper
+│   └── api_endpoints.dart        # API endpoint constants
+├── config/
+│   └── environment.dart          # Environment configuration
+├── constants/
+│   ├── app_datePicker.dart       # Reusable date picker widget
+│   ├── app_dropdownButtonFormField.dart
+│   ├── app_dropdownButtonFormField2.dart
+│   ├── app_images.dart           # Image asset paths
+│   ├── app_textField.dart        # Custom text field
+│   ├── app_textFormField.dart    # Custom form field
+│   ├── buttons.dart              # Button styles
+│   ├── colors.dart               # App color palette
+│   ├── spacing.dart              # Spacing constants
+│   └── styles.dart               # Text styles
+├── utils/
+│   ├── api_utils.dart            # API helper functions
+│   ├── download_pdf.dart         # PDF download functionality
+│   ├── exit_confirmation.dart    # Exit dialog helper
+│   ├── form_constants.dart       # Form configuration
+│   ├── validators.dart           # Form validation
+│   └── view_pdf.dart             # PDF viewer
+└── widgets/
+    ├── app_bar.dart              # Custom app bar
+    ├── cliente_search.dart       # Customer search widget
+    ├── customer_form.dart        # Customer form
+    ├── date_range_filter.dart    # Date range picker
+    ├── encomienda_cliente_form_data.dart
+    ├── encomienda_form.dart      # Encomienda form
+    ├── encomienda_header.dart    # Encomienda card header
+    ├── info_rows_card.dart       # Info display card
+    ├── loading.dart              # Loading indicators
+    └── step_containers.dart      # Multi-step form containers
+```
+
+### Core Submodules
+
+#### api/
+
+Contains API communication infrastructure:
+
+- **api_client.dart**: Dio-based HTTP client with interceptors for authentication and error handling
+- **api_endpoints.dart**: Centralized API endpoint constants
+
+```dart
+class ApiEndpoints {
+  static const String login = '/auth/login';
+  static const String clientes = '/clientes/getClientes';
+  static const String encomiendas = '/encomienda/getEncomiendas';
+  // ... more endpoints
+}
+```
+
+#### constants/
+
+Reusable UI components and styling constants:
+
+- Form field components with consistent styling
+- Color palette and theme colors
+- Typography styles
+- Spacing and sizing constants
+
+#### utils/
+
+Helper functions and utilities:
+
+- **api_utils.dart**: Error message extraction, response parsing
+- **validators.dart**: Form field validation functions
+- **download_pdf.dart** & **view_pdf.dart**: Document handling
+
+#### widgets/
+
+Reusable widget components shared across screens:
+
+- Custom form widgets
+- Search components
+- Loading and error states
+- Data display cards
+
+## Data Directory
+
+```
+data/
+├── datasources/
+│   └── (future: remote/local data sources)
+└── mocks/
+    └── (future: mock data for testing)
+```
+
+Reserved for data layer implementation, currently minimal.
+
+## Models Directory
+
+Contains all data models with JSON serialization:
+
+```
+models/
+├── auth_session.dart          # Auth session data
+├── customer.dart              # Customer model
+├── department.dart            # Department model
+├── direccion.dart             # Address model
+├── district.dart              # District model
+├── encomienda.dart            # Encomienda (shipment) model
+├── estado.dart                # Status model
+├── historialEstado.dart       # Status history model
+├── image.dart                 # Image model
+├── infoByDocument.dart        # Document info model
+├── motorizado.dart            # Driver model
+├── plan.dart                  # Pricing plan model
+├── precioCalculo.dart         # Price calculation result
+├── province.dart              # Province model
+├── sucursal.dart              # Branch model
+├── tipoCliente.dart           # Customer type enum
+├── tipoDetraccion.dart        # Detraction type model
+├── tipoEntragaEnum.dart       # Delivery type enum
+├── tipoEntrega.dart           # Delivery type model
+├── tipoEnvio.dart             # Shipping type model
+├── tipoPago.dart              # Payment type model
+└── ubicacion_data.dart        # Location data model
+```
+
+Each model includes:
+- Dart class with typed properties
+- `fromJson()` factory constructor
+- `toJson()` method for API requests
+- Optional: Multiple factory constructors for different API responses
+
+See [Model Documentation](/development/models/encomienda) for examples.
+
+## Providers Directory
+
+State management providers using the Provider pattern:
+
+```
+providers/
+├── auth_provider.dart              # Authentication state
+├── configuraciones_provider.dart   # Configuration state
+├── customer_provider.dart          # Customer state
+├── dashboard_provider.dart         # Dashboard state
+├── encomiendas_provider.dart       # Encomienda state
+├── motorizado_provider.dart        # Driver state
+├── solicitud_provider.dart         # Solicitud state
+├── sucursales_provider.dart        # Branch state
+└── user_provider.dart              # User state
+```
+
+All providers:
+- Extend `ChangeNotifier`
+- Manage loading states
+- Handle errors
+- Coordinate with services
+
+See [State Management](/development/state-management) for implementation details.
+
+## Routes Directory
+
+Navigation configuration:
+
+```
+routes/
+└── app_routes.dart    # Named routes and navigation
+```
+
+**app_routes.dart** defines:
+- Route name constants
+- Route to widget mapping
+- Route parameter handling
+
+```dart
+class AppRoutes {
+  static const String login = '/login';
+  static const String adminModule = '/adminModule';
+  static const String newEncomienda = '/newEncomienda';
+  
+  static Map<String, WidgetBuilder> routes = {
+    login: (context) => LoginScreen(),
+    adminModule: (context) => ModulesAdminScreen(),
+    // ... more routes
+  };
+}
+```
+
+## Screens Directory
+
+UI screens organized by user module:
+
+```
+screens/
+├── auth/                              # Authentication screens
+│   ├── font_page.dart                 # Welcome/landing page
+│   ├── login_screen.dart              # Admin/driver login
+│   ├── login_cliente_screen.dart      # Client login
+│   ├── forgot_password_cliente_screen.dart
+│   ├── reset_password_cliente_screen.dart
+│   ├── enviar_codigo_screen.dart      # Send verification code
+│   ├── verificar_cliente_screen.dart  # Verify account
+│   └── registrar_usuario_cliente_screen.dart
+├── Modulos-Admin/                     # Admin module screens
+│   ├── modules_admin_screen.dart      # Admin dashboard
+│   ├── user_detail_screen.dart        # User profile
+│   ├── customer/
+│   │   ├── new_customer_screen.dart
+│   │   └── edit_customer_screen.dart
+│   ├── dashboard/
+│   │   └── (dashboard screens)
+│   ├── encomienda/
+│   │   ├── new_encomienda_screen.dart
+│   │   ├── historial_estados_screen.dart
+│   │   ├── imagen_encomienda_screen.dart
+│   │   └── asignar_motorizado_screen.dart
+│   └── usuario/
+│       └── historial_encomiendas_screen.dart
+├── Modulos-Cliente/                   # Client module screens
+│   ├── modules_customer_screen.dart   # Client dashboard
+│   ├── solicitar_envio_screen.dart    # Request shipment
+│   ├── solicitud_screen.dart          # View solicitudes
+│   ├── solicitud_atendida_screen.dart # Completed solicitudes
+│   └── user_cliente_detail_screen.dart
+└── Modulos-Motorizado/                # Driver module screens
+    ├── modules_motorizado_screen.dart # Driver dashboard
+    ├── dashboard/
+    └── encomienda/
+```
+
+### Screen Organization
+
+Screens are grouped by user type:
+
+1. **auth/**: Public screens for authentication
+2. **Modulos-Admin/**: Admin-only screens for management
+3. **Modulos-Cliente/**: Client portal screens
+4. **Modulos-Motorizado/**: Driver app screens
+
+Each module has its own dashboard/home screen and feature-specific subscreens.
+
+## Services Directory
+
+API communication services:
+
+```
+services/
+├── auth_service.dart              # Authentication API
+├── configuraciones_service.dart   # Configuration API
+├── customer_service.dart          # Customer API
+├── dashboard_service.dart.dart    # Dashboard API
+├── encomienda_service.dart        # Encomienda API
+├── motorizado_service.dart        # Driver API
+├── solicitud_service.dart         # Solicitud API
+├── sucursal_service.dart          # Branch API
+└── user_service.dart              # User API
+```
+
+Each service:
+- Receives `ApiClient` via constructor
+- Makes HTTP requests to specific endpoints
+- Parses JSON responses into models
+- Throws exceptions for errors
+
+See [Services Overview](/development/services/overview) for details.
+
+## File Naming Conventions
+
+### General Rules
+
+- **snake_case**: All file names use lowercase with underscores
+- **Descriptive names**: Files named after their primary class/purpose
+- **Suffix conventions**:
+  - `_screen.dart`: Screen/page widgets
+  - `_provider.dart`: Provider classes
+  - `_service.dart`: Service classes
+  - `_model.dart` or just `.dart`: Models
+
+### Examples
+
+```
+✅ Good:
+login_screen.dart
+customer_provider.dart
+encomienda_service.dart
+api_client.dart
+
+❌ Bad:
+LoginScreen.dart
+customerProvider.dart
+EncomiendaService.dart
+APIClient.dart
+```
+
+## Import Conventions
+
+Imports follow this order:
+
+```dart
+// 1. Dart SDK imports
+import 'dart:convert';
+import 'dart:async';
+
+// 2. Flutter imports
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+// 3. Third-party package imports
+import 'package:dio/dio.dart';
+import 'package:provider/provider.dart';
+
+// 4. Local imports
+import 'package:courier/models/customer.dart';
+import 'package:courier/services/customer_service.dart';
+import 'package:courier/core/api/api_client.dart';
+```
+
+## Key Files
+
+### main.dart
+
+App entry point - initializes providers and starts the app:
+
+```dart
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  
+  final apiClient = ApiClient();
+  
+  runApp(
+    MultiProvider(
+      providers: [/* ... */],
+      child: const MyApp(),
+    ),
+  );
+}
+```
+
+Location: `lib/main.dart:26`
+
+### app.dart
+
+Main app widget - configures MaterialApp:
+
+```dart
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'App Encomiendas',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      initialRoute: AppRoutes.fontPage,
+      routes: AppRoutes.routes,
+    );
+  }
+}
+```
+
+Location: `lib/app.dart:4`
+
+### api_client.dart
+
+Centralized HTTP client:
+
+```dart
+class ApiClient {
+  late final Dio _dio;
+
+  ApiClient() {
+    _dio = Dio(BaseOptions(
+      baseUrl: 'https://api.eisegmi.facturador.es',
+      connectTimeout: const Duration(seconds: 20),
+      receiveTimeout: const Duration(seconds: 20),
+    ));
+    _setupInterceptors();
+  }
+}
+```
+
+Location: `lib/core/api/api_client.dart:4`
+
+## Navigation Between Modules
+
+The app uses different entry points for different user types:
+
+```dart
+// Admin/Driver login → Admin/Driver modules
+AppRoutes.login → AppRoutes.adminModule | AppRoutes.motorizadoModule
+
+// Client login → Client module
+AppRoutes.loginCliente → AppRoutes.modulesCliente
+
+// Within modules
+AppRoutes.modulesCliente → AppRoutes.solicitarEnvio
+AppRoutes.adminModule → AppRoutes.newEncomienda
+```
+
+## Adding New Features
+
+When adding a new feature, follow this structure:
+
+1. **Create model** in `models/`
+2. **Create service** in `services/`
+3. **Create provider** in `providers/`
+4. **Add endpoints** to `api_endpoints.dart`
+5. **Create screens** in appropriate `screens/` subdirectory
+6. **Add routes** to `app_routes.dart`
+7. **Register provider** in `main.dart`
+
+## Related Documentation
+
+- [Architecture Overview](/development/architecture)
+- [State Management](/development/state-management)
+- [Services Architecture](/development/services/overview)

@@ -1,0 +1,646 @@
+---
+title: Installation
+description: Comprehensive installation and setup guide for App Courier
+---
+
+This guide provides detailed instructions for setting up the App Courier development environment and configuring the application for different scenarios.
+
+## System Requirements
+
+### Minimum Requirements
+
+<CardGroup cols={2}>
+  <Card title="Operating System">
+    - macOS 11.0+ (for iOS development)
+    - Windows 10/11 (64-bit)
+    - Linux (64-bit)
+  </Card>
+  <Card title="Hardware">
+    - 8 GB RAM (16 GB recommended)
+    - 10 GB free disk space
+    - Intel i5 or equivalent processor
+  </Card>
+  <Card title="Software">
+    - Flutter SDK 3.7.2+
+    - Dart SDK 3.7.2+
+    - Git 2.0+
+  </Card>
+  <Card title="IDE (Choose one)">
+    - VS Code with Flutter extension
+    - Android Studio 2022.1+
+    - IntelliJ IDEA
+  </Card>
+</CardGroup>
+
+## Prerequisites Installation
+
+### Step 1: Install Flutter SDK
+
+<Tabs>
+  <Tab title="macOS">
+    1. Download Flutter SDK:
+    
+    ```bash
+    cd ~/development
+    curl -O https://storage.googleapis.com/flutter_infra_release/releases/stable/macos/flutter_macos_3.7.2-stable.zip
+    unzip flutter_macos_3.7.2-stable.zip
+    ```
+    
+    2. Add Flutter to PATH:
+    
+    ```bash
+    # Add to ~/.zshrc or ~/.bash_profile
+    export PATH="$PATH:$HOME/development/flutter/bin"
+    
+    # Reload shell
+    source ~/.zshrc
+    ```
+    
+    3. Verify installation:
+    
+    ```bash
+    flutter doctor
+    ```
+  </Tab>
+  
+  <Tab title="Windows">
+    1. Download Flutter SDK from [flutter.dev](https://docs.flutter.dev/get-started/install/windows)
+    
+    2. Extract to a location (e.g., `C:\src\flutter`)
+    
+    3. Add Flutter to PATH:
+       - Open **System Properties** → **Environment Variables**
+       - Add `C:\src\flutter\bin` to PATH
+    
+    4. Verify installation:
+    
+    ```powershell
+    flutter doctor
+    ```
+  </Tab>
+  
+  <Tab title="Linux">
+    1. Download and extract Flutter:
+    
+    ```bash
+    cd ~/development
+    wget https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.7.2-stable.tar.xz
+    tar xf flutter_linux_3.7.2-stable.tar.xz
+    ```
+    
+    2. Add Flutter to PATH:
+    
+    ```bash
+    # Add to ~/.bashrc
+    export PATH="$PATH:$HOME/development/flutter/bin"
+    
+    # Reload shell
+    source ~/.bashrc
+    ```
+    
+    3. Install dependencies:
+    
+    ```bash
+    sudo apt-get install curl git unzip xz-utils zip libglu1-mesa
+    ```
+    
+    4. Verify installation:
+    
+    ```bash
+    flutter doctor
+    ```
+  </Tab>
+</Tabs>
+
+### Step 2: Install Platform-Specific Tools
+
+<Tabs>
+  <Tab title="Android Development">
+    ### Install Android Studio
+    
+    1. Download [Android Studio](https://developer.android.com/studio)
+    2. Install Android Studio and follow the setup wizard
+    3. Install required SDK components:
+       - Android SDK Platform, API 33 or higher
+       - Android SDK Build-Tools
+       - Android SDK Command-line Tools
+       - Android Emulator
+    
+    ### Configure Android SDK
+    
+    ```bash
+    flutter config --android-sdk <path-to-android-sdk>
+    flutter doctor --android-licenses
+    ```
+    
+    ### Verify Android setup:
+    
+    ```bash
+    flutter doctor -v
+    ```
+    
+    Look for ✓ marks next to:
+    - Android toolchain
+    - Android Studio
+  </Tab>
+  
+  <Tab title="iOS Development (macOS only)">
+    ### Install Xcode
+    
+    1. Download Xcode from the Mac App Store
+    2. Install Xcode Command Line Tools:
+    
+    ```bash
+    sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+    sudo xcodebuild -runFirstLaunch
+    ```
+    
+    ### Install CocoaPods
+    
+    ```bash
+    sudo gem install cocoapods
+    pod setup
+    ```
+    
+    ### Accept Xcode License
+    
+    ```bash
+    sudo xcodebuild -license accept
+    ```
+    
+    ### Verify iOS setup:
+    
+    ```bash
+    flutter doctor -v
+    ```
+    
+    Look for ✓ marks next to:
+    - Xcode
+    - CocoaPods
+  </Tab>
+</Tabs>
+
+### Step 3: Install IDE and Extensions
+
+<Tabs>
+  <Tab title="VS Code">
+    1. Download and install [VS Code](https://code.visualstudio.com/)
+    
+    2. Install Flutter extension:
+       - Open VS Code
+       - Press `Ctrl+Shift+X` (or `Cmd+Shift+X` on macOS)
+       - Search for "Flutter"
+       - Install the official Flutter extension (this also installs Dart)
+    
+    3. Verify installation:
+       - Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS)
+       - Type "Flutter: Run Flutter Doctor"
+  </Tab>
+  
+  <Tab title="Android Studio">
+    1. Open Android Studio
+    
+    2. Install Flutter plugin:
+       - Go to **File > Settings > Plugins** (or **Android Studio > Preferences > Plugins** on macOS)
+       - Search for "Flutter"
+       - Click **Install**
+       - Restart Android Studio
+    
+    3. Configure Flutter SDK path:
+       - Go to **File > Settings > Languages & Frameworks > Flutter**
+       - Set Flutter SDK path
+  </Tab>
+</Tabs>
+
+## Project Setup
+
+### Clone and Initialize
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone <repository-url>
+    cd courier
+    ```
+  </Step>
+  
+  <Step title="Install dependencies">
+    ```bash
+    flutter pub get
+    ```
+    
+    This installs all packages from `pubspec.yaml`:
+    
+    ```yaml
+    dependencies:
+      flutter:
+        sdk: flutter
+      dio: ^5.9.0                    # HTTP client
+      provider: ^6.0.5               # State management
+      shared_preferences: ^2.2.2     # Local storage
+      url_launcher: ^6.3.2           # Open URLs
+      intl: ^0.20.2                  # Internationalization
+      http: ^1.6.0                   # HTTP requests
+      path_provider: ^2.1.5          # File paths
+      permission_handler: ^12.0.1    # Permissions
+      image_picker: ^1.2.1           # Camera/gallery
+      fl_chart: ^0.66.2              # Charts
+      pinput: ^6.0.2                 # PIN input
+      pdf: ^3.11.3                   # PDF generation
+      printing: ^5.14.2              # Print PDF
+      flutter_launcher_icons: ^0.14.4 # App icons
+      cupertino_icons: ^1.0.8        # iOS icons
+    ```
+  </Step>
+  
+  <Step title="Verify project structure">
+    ```bash
+    ls -la
+    ```
+    
+    You should see:
+    - `lib/` - Dart source code
+    - `android/` - Android platform code
+    - `ios/` - iOS platform code
+    - `assets/` - Images, documents, logos
+    - `pubspec.yaml` - Project configuration
+  </Step>
+</Steps>
+
+## Configuration
+
+### API Configuration
+
+The API client is configured in `lib/core/api/api_client.dart`:
+
+```dart
+class ApiClient {
+  late final Dio _dio;
+
+  ApiClient() {
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: 'https://api.eisegmi.facturador.es', // API endpoint
+        validateStatus: (status) {
+          return status != null && status >= 200 && status < 300;
+        },
+        connectTimeout: const Duration(seconds: 20),
+        receiveTimeout: const Duration(seconds: 20),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
+  }
+}
+```
+
+<Tabs>
+  <Tab title="Production">
+    For production builds, use the default API endpoint:
+    
+    ```dart
+    baseUrl: 'https://api.eisegmi.facturador.es'
+    ```
+  </Tab>
+  
+  <Tab title="Staging/Development">
+    For development/staging environment:
+    
+    ```dart
+    baseUrl: 'https://staging-api.your-domain.com'
+    ```
+    
+    Or use environment-based configuration:
+    
+    ```dart
+    import 'package:courier/core/config/environment.dart';
+    
+    ApiClient() {
+      final baseUrl = Environment.useMockData 
+        ? 'https://staging-api.your-domain.com'
+        : 'https://api.eisegmi.facturador.es';
+      
+      _dio = Dio(BaseOptions(baseUrl: baseUrl));
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Local Development">
+    For local backend development:
+    
+    ```dart
+    // Android emulator
+    baseUrl: 'http://10.0.2.2:3000'
+    
+    // iOS simulator  
+    baseUrl: 'http://localhost:3000'
+    
+    // Physical device (use your computer's IP)
+    baseUrl: 'http://192.168.1.100:3000'
+    ```
+  </Tab>
+</Tabs>
+
+### Environment Configuration
+
+Modify `lib/core/config/environment.dart` for development settings:
+
+```dart
+class Environment {
+  static const bool useMockData = false; // Set to true for testing without API
+}
+```
+
+### Android Configuration
+
+#### Permissions
+
+The app requires several permissions defined in `android/app/src/main/AndroidManifest.xml`:
+
+```xml
+<uses-permission android:name="android.permission.INTERNET"/>
+<uses-permission android:name="android.permission.CAMERA"/>
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+<uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/> <!-- Android 13+ -->
+```
+
+<Note>
+  These permissions are required for:
+  - **INTERNET**: API communication
+  - **CAMERA**: Taking package photos
+  - **STORAGE**: Saving and accessing documents/images
+</Note>
+
+#### App Name and Icon
+
+The app name is set in `AndroidManifest.xml:4`:
+
+```xml
+<application
+    android:label="EISEGMI"
+    android:icon="@mipmap/ic_launcher">
+```
+
+To customize the app icon:
+
+1. Place your logo at `assets/logo/logo.png`
+2. Run the icon generator:
+
+```bash
+flutter pub run flutter_launcher_icons
+```
+
+Configuration is in `pubspec.yaml:109-112`:
+
+```yaml
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/logo/logo.png"
+```
+
+### iOS Configuration
+
+#### Info.plist Permissions
+
+Add permission descriptions to `ios/Runner/Info.plist`:
+
+```xml
+<key>NSCameraUsageDescription</key>
+<string>This app needs camera access to take photos of packages</string>
+<key>NSPhotoLibraryUsageDescription</key>
+<string>This app needs photo library access to select package images</string>
+```
+
+#### Bundle Identifier
+
+Update the bundle identifier in `ios/Runner.xcodeproj` to match your organization.
+
+## Assets Setup
+
+Ensure your assets directory structure matches `pubspec.yaml:75-78`:
+
+```
+assets/
+├── images/      # General images
+├── documents/   # PDF templates, etc.
+└── logo/        # App logo
+    └── logo.png
+```
+
+<Warning>
+  Create these directories if they don't exist, or the app may fail to build.
+</Warning>
+
+## Build and Run
+
+### Debug Build
+
+```bash
+# Run on connected device
+flutter run
+
+# Run on specific device
+flutter run -d <device-id>
+
+# Run with verbose logging
+flutter run -v
+```
+
+### Release Build
+
+<CodeGroup>
+```bash Android APK
+flutter build apk --release
+
+# Output: build/app/outputs/flutter-apk/app-release.apk
+```
+
+```bash Android App Bundle
+flutter build appbundle --release
+
+# Output: build/app/outputs/bundle/release/app-release.aab
+```
+
+```bash iOS
+flutter build ios --release
+
+# Then use Xcode to archive and distribute
+```
+</CodeGroup>
+
+### Profile Build (Performance Testing)
+
+```bash
+flutter run --profile
+```
+
+## Testing
+
+### Run Tests
+
+```bash
+# Run all tests
+flutter test
+
+# Run with coverage
+flutter test --coverage
+```
+
+### Code Analysis
+
+```bash
+# Analyze code for issues
+flutter analyze
+
+# Format code
+flutter format lib/
+```
+
+## Troubleshooting
+
+### Common Build Issues
+
+<AccordionGroup>
+  <Accordion title="Gradle build fails on Android">
+    ```bash
+    cd android
+    ./gradlew clean
+    cd ..
+    flutter clean
+    flutter pub get
+    flutter build apk
+    ```
+  </Accordion>
+  
+  <Accordion title="CocoaPods installation fails on iOS">
+    ```bash
+    cd ios
+    rm -rf Pods Podfile.lock
+    pod repo update
+    pod install
+    cd ..
+    flutter clean
+    flutter pub get
+    ```
+  </Accordion>
+  
+  <Accordion title="Dependency conflicts">
+    ```bash
+    flutter pub cache repair
+    flutter clean
+    flutter pub get
+    ```
+  </Accordion>
+  
+  <Accordion title="Assets not found">
+    Ensure all asset directories exist and are declared in `pubspec.yaml`:
+    
+    ```bash
+    mkdir -p assets/images assets/documents assets/logo
+    flutter clean
+    flutter pub get
+    ```
+  </Accordion>
+  
+  <Accordion title="Permission errors at runtime">
+    - Ensure permissions are declared in `AndroidManifest.xml`
+    - For iOS, add usage descriptions in `Info.plist`
+    - Grant permissions manually in device settings
+  </Accordion>
+</AccordionGroup>
+
+### Debug Tools
+
+#### Flutter Inspector
+
+```bash
+# While app is running, press 'v' to open DevTools
+flutter run
+# Press 'v'
+```
+
+#### Logging
+
+Add debug logging to your code:
+
+```dart
+import 'dart:developer' as developer;
+
+developer.log('Debug message', name: 'app.courier');
+```
+
+View logs:
+
+```bash
+flutter logs
+```
+
+## Performance Optimization
+
+### Enable Code Shrinking (Android)
+
+Edit `android/app/build.gradle`:
+
+```gradle
+buildTypes {
+    release {
+        shrinkResources true
+        minifyEnabled true
+        proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+    }
+}
+```
+
+### Optimize Images
+
+Reduce asset size by compressing images:
+
+```bash
+# Install ImageMagick
+convert assets/images/*.png -quality 85 assets/images/optimized/
+```
+
+## Continuous Integration
+
+### GitHub Actions Example
+
+```yaml
+name: Flutter CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    - uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.7.2'
+    
+    - run: flutter pub get
+    - run: flutter analyze
+    - run: flutter test
+    - run: flutter build apk --release
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get your first build running
+  </Card>
+  <Card title="Architecture" icon="diagram-project" href="/introduction">
+    Learn about the app architecture
+  </Card>
+  <Card title="Development" icon="code" href="/development/architecture">
+    Start building features
+  </Card>
+  <Card title="Configuration" icon="gear" href="/configuration/environment">
+    Configure your environment
+  </Card>
+</CardGroup>

@@ -1,0 +1,456 @@
+---
+title: State Management
+description: Provider pattern implementation and state flow in App Courier
+---
+
+## Overview
+
+App Courier uses the **Provider pattern** for state management. All business logic is encapsulated in Provider classes that extend `ChangeNotifier`, allowing UI components to reactively update when state changes.
+
+## Provider Architecture
+
+### Provider Initialization
+
+Providers are initialized at app startup in `main.dart` using `MultiProvider`:
+
+```dart
+runApp(
+  MultiProvider(
+    providers: [
+      ChangeNotifierProvider(create: (_) => AuthProvider(AuthService(apiClient))),
+      ChangeNotifierProvider(create: (_) => CustomersProvider(CustomerService(apiClient))),
+      ChangeNotifierProvider(create: (_) => EncomiendasProvider(EncomiendaService(apiClient))),
+      ChangeNotifierProvider(create: (_) => SucursalesProvider(SucursalService(apiClient))),
+      ChangeNotifierProvider(create: (_) => ConfiguracionesProvider(ConfiguracionesService(apiClient))),
+      ChangeNotifierProvider(create: (_) => UsersProvider(UserService(apiClient))),
+      ChangeNotifierProvider(create: (_) => MotorizadoProvider(MotorizadoService(apiClient))),
+      ChangeNotifierProvider(create: (_) => DashboardProvider(DashboardService(apiClient))),
+      ChangeNotifierProvider(create: (_) => SolicitudProvider(SolicitudService(apiClient))),
+    ],
+    child: const MyApp(),
+  ),
+);
+```
+
+## Provider Structure
+
+All providers follow a consistent pattern. Here's the structure of `EncomiendasProvider`:
+
+```dart
+class EncomiendasProvider extends ChangeNotifier {
+  // 1. Dependency injection
+  final EncomiendaService _service;
+  EncomiendasProvider(this._service);
+
+  // 2. Private state variables
+  List<Encomienda> _encomiendas = [];
+  bool _isLoading = false;
+  String? _error;
+
+  // 3. Public getters
+  List<Encomienda> get encomiendas => _encomiendas;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+
+  // 4. State mutation methods
+  Future<void> getEncomiendas(int idSucursal, String fechaInicio, String fechaFin) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners(); // Update UI immediately
+
+    try {
+      _encomiendas = await _service.getEncomiendas(idSucursal, fechaInicio, fechaFin);
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners(); // Update UI after operation
+    }
+  }
+}
+```
+
+## State Flow Pattern
+
+Every async operation follows this flow:
+
+```
+┌─────────────────────┐
+│  User Action (UI)   │
+└──────────┬──────────┘
+           ↓
+┌─────────────────────┐
+│  Set Loading State  │ ← notifyListeners()
+└──────────┬──────────┘
+           ↓
+┌─────────────────────┐
+│  Call Service Layer │
+└──────────┬──────────┘
+           ↓
+┌─────────────────────┐
+│   Update State      │
+│  (success/error)    │
+└──────────┬──────────┘
+           ↓
+┌─────────────────────┐
+│  Clear Loading      │ ← notifyListeners()
+└─────────────────────┘
+```
+
+## Using Providers in UI
+
+### Reading State
+
+Use `Provider.of` or `context.watch` to read provider state:
+
+```dart
+// Method 1: Provider.of
+final provider = Provider.of<EncomiendasProvider>(context);
+final encomiendas = provider.encomiendas;
+final isLoading = provider.isLoading;
+
+// Method 2: context.watch (rebuilds on change)
+final encomiendas = context.watch<EncomiendasProvider>().encomiendas;
+
+// Method 3: context.read (doesn't rebuild on change)
+final provider = context.read<EncomiendasProvider>();
+```
+
+### Calling Provider Methods
+
+Use `context.read` for calling methods to avoid unnecessary rebuilds:
+
+```dart
+onPressed: () async {
+  final provider = context.read<EncomiendasProvider>();
+  await provider.getEncomiendas(idSucursal, fechaInicio, fechaFin);
+  
+  if (provider.error != null) {
+    // Show error dialog
+    showDialog(...);
+  }
+}
+```
+
+### Conditional UI Based on State
+
+```dart
+Widget build(BuildContext context) {
+  final provider = context.watch<EncomiendasProvider>();
+
+  if (provider.isLoading) {
+    return LoadingWidget();
+  }
+
+  if (provider.error != null) {
+    return ErrorWidget(message: provider.error!);
+  }
+
+  return ListView.builder(
+    itemCount: provider.encomiendas.length,
+    itemBuilder: (context, index) {
+      final encomienda = provider.encomiendas[index];
+      return EncomiendaCard(encomienda: encomienda);
+    },
+  );
+}
+```
+
+## Provider Examples
+
+### CustomersProvider
+
+Manages customer data and operations:
+
+```dart
+class CustomersProvider extends ChangeNotifier {
+  final CustomerService _service;
+  
+  List<Customer> _customers = [];
+  Customer? _customerById;
+  bool _isLoading = false;
+  String? _error;
+
+  List<Customer> get customers => _customers;
+  Customer? get customerById => _customerById;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+
+  Future<void> getClientes(int idSucursal) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      _customers = await _service.getCustomers(idSucursal);
+    } catch (e) {
+      _customers = [];
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> createCustomer(Customer customer) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _service.createCustomer(customer);
+    } catch (e) {
+      _error = e.toString().replaceFirst('Exception: ', '');
+      rethrow; // Let UI handle the error
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+}
+```
+
+### EncomiendasProvider
+
+Manages encomienda state with complex operations:
+
+```dart
+class EncomiendasProvider extends ChangeNotifier {
+  final EncomiendaService _service;
+  
+  List<Encomienda> _encomiendas = [];
+  List<HistorialEstado> _historialEstados = [];
+  List<Estado> _estadosDisponibles = [];
+  PrecioCalculo? _precioCalculado;
+  bool _isLoading = false;
+  String? _error;
+
+  // State with filter parameters
+  int? idSucursal;
+  String? fechaInicio;
+  String? fechaFin;
+
+  Future<void> getEncomiendas(int idSucursal, String fechaInicio, String fechaFin) async {
+    _isLoading = true;
+    _error = null;
+    // Save filter parameters for later use
+    this.idSucursal = idSucursal;
+    this.fechaInicio = fechaInicio;
+    this.fechaFin = fechaFin;
+    notifyListeners();
+
+    try {
+      _encomiendas = await _service.getEncomiendas(idSucursal, fechaInicio, fechaFin);
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> calcularPrecio(
+    double kg,
+    int idCliente,
+    int idDistritoDesti,
+    int idPlan,
+    String tipoEnvio,
+    String tipoEntrega
+  ) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      _precioCalculado = await _service.calcularPrecio(
+        kg, idCliente, idDistritoDesti, idPlan, tipoEnvio, tipoEntrega
+      );
+    } catch (e) {
+      _precioCalculado = null;
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+}
+```
+
+## Common State Patterns
+
+### Pattern 1: List Management
+
+```dart
+List<Item> _items = [];
+List<Item> get items => _items;
+
+Future<void> loadItems() async {
+  _items = await _service.getItems();
+  notifyListeners();
+}
+```
+
+### Pattern 2: Single Item Management
+
+```dart
+Item? _selectedItem;
+Item? get selectedItem => _selectedItem;
+
+Future<void> loadItem(int id) async {
+  _selectedItem = await _service.getItem(id);
+  notifyListeners();
+}
+
+void clearSelection() {
+  _selectedItem = null;
+  notifyListeners();
+}
+```
+
+### Pattern 3: Form State with Validation
+
+```dart
+String? _error;
+String? get error => _error;
+
+Future<void> submitForm(FormData data) async {
+  _error = null;
+  _isLoading = true;
+  notifyListeners();
+
+  try {
+    await _service.submit(data);
+  } catch (e) {
+    _error = e.toString();
+    rethrow; // Allow UI to show error dialog
+  } finally {
+    _isLoading = false;
+    notifyListeners();
+  }
+}
+```
+
+### Pattern 4: Filter State Persistence
+
+```dart
+// Save filter parameters for refresh operations
+int? currentIdSucursal;
+String? currentFechaInicio;
+String? currentFechaFin;
+
+Future<void> loadWithFilters(int idSucursal, String fechaInicio, String fechaFin) async {
+  // Save current filters
+  currentIdSucursal = idSucursal;
+  currentFechaInicio = fechaInicio;
+  currentFechaFin = fechaFin;
+  
+  await _loadData();
+}
+
+Future<void> refresh() async {
+  // Reuse saved filters
+  if (currentIdSucursal != null) {
+    await loadWithFilters(currentIdSucursal!, currentFechaInicio!, currentFechaFin!);
+  }
+}
+```
+
+## Error Handling in Providers
+
+### Strategy 1: Store Error, Don't Re-throw
+
+```dart
+try {
+  _data = await _service.getData();
+} catch (e) {
+  _error = e.toString();
+} // UI checks error property
+```
+
+### Strategy 2: Store Error and Re-throw
+
+```dart
+try {
+  await _service.submit(data);
+} catch (e) {
+  _error = e.toString();
+  rethrow; // UI can show dialog or snackbar
+}
+```
+
+### Strategy 3: Clear Previous Errors
+
+```dart
+Future<void> operation() async {
+  _error = null; // Clear previous error
+  _isLoading = true;
+  notifyListeners();
+  // ... rest of operation
+}
+```
+
+## Best Practices
+
+<Accordion title="Always call notifyListeners() after state changes">
+Every time you mutate state that affects the UI, call `notifyListeners()` to trigger widget rebuilds.
+
+```dart
+// ✅ Good
+_items = newItems;
+notifyListeners();
+
+// ❌ Bad
+_items = newItems;
+// Forgot to call notifyListeners()
+```
+</Accordion>
+
+<Accordion title="Use private variables with public getters">
+Encapsulate state to prevent external mutation:
+
+```dart
+// ✅ Good
+List<Item> _items = [];
+List<Item> get items => _items;
+
+// ❌ Bad
+List<Item> items = []; // Can be mutated externally
+```
+</Accordion>
+
+<Accordion title="Set loading state before async operations">
+Provide immediate user feedback:
+
+```dart
+Future<void> loadData() async {
+  _isLoading = true;
+  notifyListeners(); // Show loading indicator immediately
+  
+  try {
+    _data = await _service.getData();
+  } finally {
+    _isLoading = false;
+    notifyListeners(); // Hide loading indicator
+  }
+}
+```
+</Accordion>
+
+<Accordion title="Use context.read for actions, context.watch for state">
+```dart
+// ✅ Good
+final provider = context.read<MyProvider>();
+await provider.doAction();
+
+// ✅ Good
+final data = context.watch<MyProvider>().data;
+
+// ❌ Bad - unnecessary rebuilds
+final provider = context.watch<MyProvider>();
+await provider.doAction();
+```
+</Accordion>
+
+## Related Documentation
+
+- [Architecture Overview](/development/architecture)
+- [Services Architecture](/development/services/overview)
+- [API Client Implementation](/development/services/api-client)

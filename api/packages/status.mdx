@@ -1,0 +1,265 @@
+---
+title: 'Package Status'
+description: 'Get status history and update package status'
+---
+
+## Get Status History
+
+Retrieve the complete status history for a package, including all status changes with timestamps and personnel information.
+
+### Endpoint
+
+<ParamField path="method" type="string" default="GET">
+  GET
+</ParamField>
+
+<ParamField path="endpoint" type="string">
+  `/encomienda/getHistorialEstados`
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="id_encomienda" type="integer" required>
+  Package ID
+</ParamField>
+
+### Response
+
+<ResponseField name="data" type="array">
+  Array of status history entries
+
+  <ResponseField name="id" type="integer">
+    Status history entry ID
+  </ResponseField>
+
+  <ResponseField name="id_estado" type="integer">
+    Status type ID
+  </ResponseField>
+
+  <ResponseField name="nombre" type="string">
+    Status name/description
+  </ResponseField>
+
+  <ResponseField name="fecha" type="string">
+    Date of status change
+  </ResponseField>
+
+  <ResponseField name="hora" type="string">
+    Time of status change
+  </ResponseField>
+
+  <ResponseField name="comentario" type="string">
+    Comment or notes about the status change
+  </ResponseField>
+
+  <ResponseField name="id_personal" type="integer">
+    ID of personnel who made the change
+  </ResponseField>
+
+  <ResponseField name="nombre_personal" type="string">
+    Name of personnel who made the change
+  </ResponseField>
+
+  <ResponseField name="nombre_agencia" type="string">
+    Branch/agency where status was updated
+  </ResponseField>
+</ResponseField>
+
+### Request Example
+
+```bash
+GET /encomienda/getHistorialEstados?id_encomienda=123
+```
+
+### Response Example
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "id_estado": 1,
+      "nombre": "Registrado",
+      "fecha": "2026-03-05",
+      "hora": "09:30:00",
+      "comentario": "Encomienda registrada en sistema",
+      "id_personal": 10,
+      "nombre_personal": "Carlos Mendoza",
+      "nombre_agencia": "Lima Centro"
+    },
+    {
+      "id": 2,
+      "id_estado": 2,
+      "nombre": "En tránsito",
+      "fecha": "2026-03-05",
+      "hora": "14:45:00",
+      "comentario": "Paquete salió hacia destino",
+      "id_personal": 12,
+      "nombre_personal": "Ana Torres",
+      "nombre_agencia": "Lima Centro"
+    },
+    {
+      "id": 3,
+      "id_estado": 5,
+      "nombre": "En agencia destino",
+      "fecha": "2026-03-06",
+      "hora": "08:15:00",
+      "comentario": "Llegó a agencia de destino",
+      "id_personal": 15,
+      "nombre_personal": "Luis Ramírez",
+      "nombre_agencia": "Arequipa Norte"
+    }
+  ]
+}
+```
+
+---
+
+## Update Package Status
+
+Add a new status update to a package's history.
+
+### Endpoint
+
+<ParamField path="method" type="string" default="POST">
+  POST
+</ParamField>
+
+<ParamField path="endpoint" type="string">
+  `/encomienda/addEstadoEncomienda`
+</ParamField>
+
+### Request Body
+
+<ParamField body="id_encomienda" type="integer" required>
+  Package ID
+</ParamField>
+
+<ParamField body="id_estado" type="integer" required>
+  New status ID to assign
+</ParamField>
+
+<ParamField body="comentario" type="string" required>
+  Comment or notes about the status change
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the status was updated successfully
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+### Request Example
+
+```json
+{
+  "id_encomienda": 123,
+  "id_estado": 6,
+  "comentario": "Paquete entregado al destinatario"
+}
+```
+
+### Response Example
+
+```json
+{
+  "success": true,
+  "message": "Estado actualizado exitosamente"
+}
+```
+
+---
+
+## Get Available Statuses
+
+Retrieve the list of statuses that can be assigned to a specific package based on its current state.
+
+### Endpoint
+
+<ParamField path="method" type="string" default="GET">
+  GET
+</ParamField>
+
+<ParamField path="endpoint" type="string">
+  `/encomienda/getEstadosDisponibles`
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="id_encomienda" type="integer" required>
+  Package ID
+</ParamField>
+
+### Response
+
+<ResponseField name="data" type="array">
+  Array of available status objects
+
+  <ResponseField name="id" type="integer">
+    Status ID
+  </ResponseField>
+
+  <ResponseField name="nombre" type="string">
+    Status name/description
+  </ResponseField>
+
+  <ResponseField name="color" type="string">
+    Status color code
+  </ResponseField>
+</ResponseField>
+
+### Request Example
+
+```bash
+GET /encomienda/getEstadosDisponibles?id_encomienda=123
+```
+
+### Response Example
+
+```json
+{
+  "data": [
+    {
+      "id": 3,
+      "nombre": "En reparto",
+      "color": "#FF9800"
+    },
+    {
+      "id": 6,
+      "nombre": "Entregado",
+      "color": "#4CAF50"
+    },
+    {
+      "id": 7,
+      "nombre": "No entregado",
+      "color": "#F44336"
+    }
+  ]
+}
+```
+
+## Status Flow
+
+Typical status progression for a package:
+
+1. **Registrado** - Package registered in the system
+2. **En tránsito** - Package in transit to destination
+3. **En agencia destino** - Package arrived at destination branch
+4. **En reparto** - Package out for delivery
+5. **Entregado** - Package delivered to recipient
+
+Alternative statuses:
+- **No entregado** - Delivery attempt failed
+- **Devuelto** - Package returned to sender
+- **Cancelado** - Package cancelled
+
+## Notes
+
+- Status changes are tracked with timestamp and personnel information for audit purposes
+- Only certain status transitions are allowed based on the current package state
+- Use the "Get Available Statuses" endpoint to determine which statuses can be applied to a package
+- Comments are required when updating status to provide context for the change

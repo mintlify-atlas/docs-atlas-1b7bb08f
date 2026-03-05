@@ -1,0 +1,566 @@
+---
+title: Services Architecture
+description: Overview of the service layer and API communication patterns
+---
+
+## Overview
+
+The service layer acts as an intermediary between the UI (via Providers) and the API. Each service is responsible for:
+
+- Making HTTP requests via `ApiClient`
+- Transforming JSON responses into model objects
+- Handling API-specific error cases
+- Providing a clean interface for business logic
+
+## Service Structure
+
+All services follow a consistent pattern:
+
+```
+services/
+├── auth_service.dart              # Authentication
+├── configuraciones_service.dart   # Configuration data
+├── customer_service.dart          # Customer operations
+├── dashboard_service.dart.dart    # Dashboard analytics
+├── encomienda_service.dart        # Encomienda management
+├── motorizado_service.dart        # Driver management
+├── solicitud_service.dart         # Solicitud operations
+├── sucursal_service.dart          # Branch operations
+└── user_service.dart              # User management
+```
+
+## Service Pattern
+
+Every service follows this structure:
+
+```dart
+class ExampleService {
+  // 1. Dependency injection
+  final ApiClient api;
+  ExampleService(this.api);
+
+  // 2. Public methods for domain operations
+  Future<List<Model>> getItems() async {
+    // 3. Make HTTP request
+    final response = await api.get(ApiEndpoints.items);
+
+    // 4. Handle response status
+    if (response.statusCode == 200) {
+      // 5. Parse JSON response
+      final body = response.data is String
+          ? jsonDecode(response.data)
+          : response.data as Map<String, dynamic>;
+
+      // 6. Transform to model objects
+      final List<dynamic> lista = body['data'] ?? [];
+      return lista.map((e) => Model.fromJson(e)).toList();
+    } else {
+      // 7. Throw descriptive error
+      throw Exception('Error al obtener items');
+    }
+  }
+
+  Future<void> createItem(Model item) async {
+    // 8. Use try-catch for error handling
+    try {
+      final response = await api.post(
+        ApiEndpoints.createItem,
+        data: item.toJson(),
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Error al crear item');
+      }
+    } on DioException catch (e) {
+      // 9. Extract user-friendly error message
+      throw extractErrorMessage(e.response?.data);
+    } catch (_) {
+      throw Exception("Error inesperado");
+    }
+  }
+}
+```
+
+## Example Services
+
+### CustomerService
+
+Manages customer CRUD operations:
+
+```dart
+class CustomerService {
+  final ApiClient api;
+  CustomerService(this.api);
+
+  // List customers by branch
+  Future<List<Customer>> getCustomers(int idSucursal) async {
+    final response = await api.post(
+      ApiEndpoints.clientes,
+      data: {'id_sucursal': idSucursal},
+    );
+
+    final body = response.data is String
+        ? jsonDecode(response.data)
+        : response.data as Map<String, dynamic>;
+
+    final List<dynamic> lista = body['data'] ?? [];
+
+    return lista.map((e) => Customer.fromJson(e)).toList();
+  }
+
+  // Get customer by ID with full details
+  Future<Customer> getCustomerById(int id) async {
+    final response = await api.get(
+      '${ApiEndpoints.clienteById}?id=$id',
+    );
+
+    if (response.statusCode == 200) {
+      final body = response.data is String
+          ? jsonDecode(response.data)
+          : response.data as Map<String, dynamic>;
+
+      return Customer.fromCustomerByIdJson(body['data']);
+    } else {
+      throw Exception('Error al obtener cliente por documento');
+    }
+  }
+
+  // Search customers by document
+  Future<List<Customer>> getCustomerByDocument(String nroDocumento) async {
+    final response = await api.get(
+      '${ApiEndpoints.searchCustomer}?busqueda=$nroDocumento',
+    );
+
+    if (response.statusCode == 200) {
+      final body = response.data is String
+          ? jsonDecode(response.data)
+          : response.data as Map<String, dynamic>;
+
+      final List<dynamic> lista = body['data'] ?? [];
+
+      return lista.map((e) => Customer.fromSearchJson(e)).toList();
+    } else {
+      throw Exception('Error al obtener cliente por documento');
+    }
+  }
+
+  // Create new customer
+  Future<void> createCustomer(Customer customer) async {
+    try {
+      final response = await api.post(
+        ApiEndpoints.createCustomer,
+        data: customer.toJson(),
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Error al registrar cliente');
+      }
+    } on DioException catch (e) {
+      throw extractErrorMessage(e.response?.data);
+    } catch (_) {
+      throw Exception("Error inesperado");
+    }
+  }
+
+  // Update existing customer
+  Future<void> updateCustomer(Customer updateCustomer) async {
+    try {
+      final response = await api.post(
+        ApiEndpoints.updateCustomer,
+        data: updateCustomer.updateToJson(),
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Error al actualizar cliente');
+      }
+    } on DioException catch (e) {
+      throw extractErrorMessage(e.response?.data);
+    } catch (_) {
+      throw Exception("Error inesperado");
+    }
+  }
+}
+```
+
+**Location**: `lib/services/customer_service.dart`
+
+### EncomiendaService
+
+Manages shipment operations with complex workflows:
+
+```dart
+class EncomiendaService {
+  final ApiClient api;
+  EncomiendaService(this.api);
+
+  // List encomiendas with filters
+  Future<List<Encomienda>> getEncomiendas(
+    int idSucursal,
+    String fechaInicio,
+    String fechaFin
+  ) async {
+    final response = await api.get(
+      '${ApiEndpoints.encomiendas}?id_sucursal=$idSucursal&fecha_inicio=$fechaInicio&fecha_fin=$fechaFin',
+    );
+
+    if (response.statusCode == 200) {
+      final body = response.data is String
+          ? jsonDecode(response.data)
+          : response.data as Map<String, dynamic>;
+
+      final List<dynamic> lista = body['data'] ?? [];
+
+      return lista.map((e) => Encomienda.fromJson(e)).toList();
+    } else {
+      throw Exception('Error al obtener encomiendas');
+    }
+  }
+
+  // Create new encomienda
+  Future<void> createEncomienda(Encomienda encomienda) async {
+    final response = await api.post(
+      ApiEndpoints.createEncomienda,
+      data: encomienda.toJson(),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Error al registrar encomienda');
+    }
+  }
+
+  // Get encomienda by tracking number
+  Future<Encomienda?> getEncomiendaByRemito(
+    int idRemitente,
+    String remito
+  ) async {
+    try {
+      final response = await api.get(
+        '${ApiEndpoints.encomiendaByRemito}?id_remitente=$idRemitente&&remito=$remito',
+      );
+
+      if (response.statusCode == 200) {
+        final body = response.data is String
+            ? jsonDecode(response.data)
+            : response.data as Map<String, dynamic>;
+
+        if (body['data'] != null) {
+          return Encomienda.fromJson(body['data']);
+        } else {
+          throw body['message'] ?? "No se encontró encomienda";
+        }
+      } else {
+        throw extractErrorMessage(response.data);
+      }
+    } on DioException catch (e) {
+      throw extractErrorMessage(e.response?.data);
+    } catch (_) {
+      throw "Error inesperado al obtener la encomienda";
+    }
+  }
+
+  // Calculate shipping price
+  Future<PrecioCalculo> calcularPrecio(
+    double kg,
+    int idCliente,
+    int idDistritoDesti,
+    int idPlan,
+    String tipoEnvio,
+    String tipoEntrega
+  ) async {
+    final response = await api.post(
+      ApiEndpoints.calcularPrecio,
+      data: {
+        "kilos": kg,
+        "id_cliente": idCliente,
+        "id_distrito_destino": idDistritoDesti,
+        "id_plan": idPlan,
+        "tipo_envio": tipoEnvio,
+        "tipo_entrega": tipoEntrega
+      },
+    );
+
+    final body = response.data is String
+        ? jsonDecode(response.data)
+        : response.data as Map<String, dynamic>;
+
+    return PrecioCalculo.fromJson(body);
+  }
+
+  // Assign drivers to encomienda
+  Future<void> asignarMotorizadosAEncomienda(
+    int idEncomienda,
+    int idMotorizado1,
+    int idMotorizado2
+  ) async {
+    final response = await api.post(
+      ApiEndpoints.asignarMotorizados,
+      data: {
+        "id": idEncomienda,
+        "id_motorizado": idMotorizado1,
+        "id_motorizado_2": idMotorizado2
+      },
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Error al asignar motorizados a encomienda');
+    }
+  }
+
+  // Upload image with multipart/form-data
+  Future<void> addImagenEncomienda(FormData formData) async {
+    final response = await api.post(
+      ApiEndpoints.agregarImagen,
+      data: formData,
+      options: Options(
+        headers: {'Content-Type': 'multipart/form-data'},
+      ),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Error al agregar imagen de encomienda');
+    }
+  }
+}
+```
+
+**Location**: `lib/services/encomienda_service.dart`
+
+## Common Patterns
+
+### Pattern 1: List Endpoint with Filters
+
+```dart
+Future<List<Item>> getItems(int filter1, String filter2) async {
+  final response = await api.get(
+    '${ApiEndpoints.items}?param1=$filter1&param2=$filter2',
+  );
+
+  if (response.statusCode == 200) {
+    final body = response.data is String
+        ? jsonDecode(response.data)
+        : response.data as Map<String, dynamic>;
+
+    final List<dynamic> lista = body['data'] ?? [];
+    return lista.map((e) => Item.fromJson(e)).toList();
+  } else {
+    throw Exception('Error al obtener items');
+  }
+}
+```
+
+### Pattern 2: Create/Update with Error Handling
+
+```dart
+Future<void> createItem(Item item) async {
+  try {
+    final response = await api.post(
+      ApiEndpoints.createItem,
+      data: item.toJson(),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Error al crear item');
+    }
+  } on DioException catch (e) {
+    throw extractErrorMessage(e.response?.data);
+  } catch (_) {
+    throw Exception("Error inesperado");
+  }
+}
+```
+
+### Pattern 3: Single Item Fetch
+
+```dart
+Future<Item> getItemById(int id) async {
+  final response = await api.get(
+    '${ApiEndpoints.item}?id=$id',
+  );
+
+  if (response.statusCode == 200) {
+    final body = response.data is String
+        ? jsonDecode(response.data)
+        : response.data as Map<String, dynamic>;
+
+    return Item.fromJson(body['data']);
+  } else {
+    throw Exception('Error al obtener item');
+  }
+}
+```
+
+### Pattern 4: File Upload
+
+```dart
+Future<void> uploadFile(int id, String filePath) async {
+  final formData = FormData.fromMap({
+    'id': id,
+    'file': await MultipartFile.fromFile(filePath),
+  });
+
+  final response = await api.post(
+    ApiEndpoints.upload,
+    data: formData,
+    options: Options(
+      headers: {'Content-Type': 'multipart/form-data'},
+    ),
+  );
+
+  if (response.statusCode != 200 && response.statusCode != 201) {
+    throw Exception('Error al subir archivo');
+  }
+}
+```
+
+## Response Parsing
+
+### Standard API Response Format
+
+Most endpoints return:
+
+```json
+{
+  "success": true,
+  "data": [...] or {...},
+  "message": "Operación exitosa"
+}
+```
+
+### Parsing Pattern
+
+```dart
+// Handle both String and Map responses
+final body = response.data is String
+    ? jsonDecode(response.data)
+    : response.data as Map<String, dynamic>;
+
+// Extract data array or object
+final data = body['data'];
+```
+
+## Error Handling
+
+### Using extractErrorMessage Utility
+
+```dart
+try {
+  final response = await api.post(endpoint, data: data);
+  // ...
+} on DioException catch (e) {
+  throw extractErrorMessage(e.response?.data);
+} catch (_) {
+  throw Exception("Error inesperado");
+}
+```
+
+The `extractErrorMessage` function (in `core/utils/api_utils.dart`) extracts user-friendly error messages from API error responses.
+
+### Error Response Format
+
+API error responses typically contain:
+
+```json
+{
+  "success": false,
+  "message": "Error específico",
+  "errors": {...}
+}
+```
+
+## Service Dependencies
+
+Services are instantiated with `ApiClient` injection:
+
+```dart
+// In main.dart
+final apiClient = ApiClient();
+
+ChangeNotifierProvider(
+  create: (_) => CustomersProvider(CustomerService(apiClient)),
+)
+```
+
+This allows:
+- Shared HTTP client configuration
+- Centralized authentication
+- Consistent error handling
+- Easy testing with mock ApiClient
+
+## Testing Services
+
+Services can be tested by mocking `ApiClient`:
+
+```dart
+class MockApiClient extends Mock implements ApiClient {}
+
+void main() {
+  test('getCustomers returns list of customers', () async {
+    final mockApi = MockApiClient();
+    final service = CustomerService(mockApi);
+    
+    when(mockApi.post(any, data: anyNamed('data')))
+        .thenAnswer((_) async => Response(
+          data: {'data': [{'id': 1, 'nombre': 'Test'}]},
+          statusCode: 200,
+        ));
+    
+    final customers = await service.getCustomers(1);
+    expect(customers.length, 1);
+    expect(customers.first.nombres, 'Test');
+  });
+}
+```
+
+## Best Practices
+
+<Accordion title="Always parse response.data safely">
+```dart
+// ✅ Good - handles both String and Map
+final body = response.data is String
+    ? jsonDecode(response.data)
+    : response.data as Map<String, dynamic>;
+
+// ❌ Bad - assumes Map
+final body = response.data as Map<String, dynamic>;
+```
+</Accordion>
+
+<Accordion title="Use specific error messages">
+```dart
+// ✅ Good
+throw Exception('Error al crear cliente');
+
+// ❌ Bad
+throw Exception('Error');
+```
+</Accordion>
+
+<Accordion title="Handle null/empty data gracefully">
+```dart
+// ✅ Good
+final List<dynamic> lista = body['data'] ?? [];
+
+// ❌ Bad
+final List<dynamic> lista = body['data'];
+```
+</Accordion>
+
+<Accordion title="Wrap network calls in try-catch">
+```dart
+// ✅ Good
+try {
+  await api.post(...);
+} on DioException catch (e) {
+  throw extractErrorMessage(e.response?.data);
+}
+
+// ❌ Bad - no error handling
+await api.post(...);
+```
+</Accordion>
+
+## Related Documentation
+
+- [API Client Implementation](/development/services/api-client)
+- [State Management](/development/state-management)
+- [Model Documentation](/development/models/encomienda)

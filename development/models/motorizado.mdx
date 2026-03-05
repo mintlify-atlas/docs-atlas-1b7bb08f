@@ -1,0 +1,416 @@
+---
+title: Motorizado Model
+description: Complete documentation of the Motorizado (driver) data model
+---
+
+## Overview
+
+The `Motorizado` class represents a delivery driver in the App Courier system. Encomiendas can be assigned to one or two drivers (for large deliveries requiring assistance).
+
+**Location**: `lib/models/motorizado.dart`
+
+## Class Definition
+
+```dart
+class Motorizado {
+  // Primary driver
+  int idMotorizado1;
+  String nombresMotorizado1;
+  
+  // Optional second driver
+  int? idMotorizado2;
+  String? nombresMotorizado2;
+  
+  // Driver details
+  String? email;
+  int? idTipoUsuario;
+  String? dinero;
+  String? updatedBy;
+  int? idUbicacion;
+}
+```
+
+## Constructor
+
+```dart
+Motorizado({
+  required this.idMotorizado1,
+  this.idMotorizado2,
+  required this.nombresMotorizado1,
+  this.nombresMotorizado2,
+  this.email,
+  this.idTipoUsuario,
+  this.dinero,
+  this.updatedBy,
+  this.idUbicacion,
+});
+```
+
+Note that `idMotorizado1` and `nombresMotorizado1` are **required** fields, while the second driver fields are optional.
+
+## JSON Serialization
+
+### fromJson (Standard User Response)
+
+Parses driver data from user/motorizado list endpoints:
+
+```dart
+factory Motorizado.fromJson(Map<String, dynamic> json) {
+  return Motorizado(
+    idMotorizado1: json['id_user'],
+    nombresMotorizado1: json['fullname'] ?? '',
+    email: json['email'] ?? '',
+    idTipoUsuario: json['id_tipo_usuario'] ?? '',
+    dinero: json['dinero'] ?? '',
+    updatedBy: json['updated_by'] ?? '',
+    idUbicacion: json['id_ubicacion'],
+  );
+}
+```
+
+**Usage**:
+```dart
+final response = await api.get('/usuarios/getMotorizados');
+final List<dynamic> data = response.data['data'];
+final motorizados = data.map((e) => Motorizado.fromJson(e)).toList();
+```
+
+### motorizadosEncomiendaFromJson (Encomienda Assignment Response)
+
+Parses driver data when retrieving assigned drivers for an encomienda:
+
+```dart
+factory Motorizado.motorizadosEncomiendaFromJson(Map<String, dynamic> json) {
+  return Motorizado(
+    idMotorizado1: json['id_motorizado'],
+    idMotorizado2: json['id_motorizado_2'],
+    nombresMotorizado1: json['nombre_motorizado'],
+    nombresMotorizado2: json['nombre_motorizado_2'],
+  );
+}
+```
+
+**Usage**:
+```dart
+final response = await api.get('/encomienda/getMotorizados?id_encomienda=123');
+final List<dynamic> data = response.data['data'];
+final motorizados = data.map((e) => 
+    Motorizado.motorizadosEncomiendaFromJson(e)
+).toList();
+```
+
+## Field Descriptions
+
+<Accordion title="Driver Identification">
+### Primary Driver
+- **idMotorizado1**: User ID of primary driver (required)
+- **nombresMotorizado1**: Full name of primary driver (required)
+
+### Secondary Driver
+- **idMotorizado2**: User ID of second driver (optional)
+- **nombresMotorizado2**: Full name of second driver (optional)
+
+Second driver is used for:
+- Large deliveries requiring assistance
+- High-value packages needing extra security
+- Training new drivers
+</Accordion>
+
+<Accordion title="Driver Details">
+- **email**: Driver's email address
+- **idTipoUsuario**: User type ID (typically 3 for drivers)
+- **dinero**: Cash on hand or collected payments
+- **updatedBy**: Last user who updated driver info
+- **idUbicacion**: Current location/branch assignment
+</Accordion>
+
+## Usage Examples
+
+### List Available Drivers
+
+```dart
+final motorizadoProvider = context.read<MotorizadoProvider>();
+await motorizadoProvider.getMotorizados(idSucursal);
+
+final motorizados = motorizadoProvider.motorizados;
+
+// Display in dropdown
+DropdownButton<int>(
+  items: motorizados.map((m) => DropdownMenuItem(
+    value: m.idMotorizado1,
+    child: Text(m.nombresMotorizado1),
+  )).toList(),
+  onChanged: (value) {
+    setState(() => selectedMotorizadoId = value);
+  },
+)
+```
+
+### Assign Drivers to Encomienda
+
+```dart
+// Assign single driver
+await encomiendaService.asignarMotorizadosAEncomienda(
+  idEncomienda: 123,
+  idMotorizado1: 45,  // Primary driver
+  idMotorizado2: 0,   // No second driver
+);
+
+// Assign two drivers
+await encomiendaService.asignarMotorizadosAEncomienda(
+  idEncomienda: 124,
+  idMotorizado1: 45,  // Primary driver
+  idMotorizado2: 67,  // Second driver
+);
+```
+
+### Get Assigned Drivers for Encomienda
+
+```dart
+final provider = context.read<EncomiendasProvider>();
+await provider.getMotorizadosEncomienda(encomiendaId);
+
+final motorizados = provider.motorizadosEncomienda;
+
+if (motorizados.isNotEmpty) {
+  final motorizado = motorizados.first;
+  
+  print('Driver 1: ${motorizado.nombresMotorizado1}');
+  
+  if (motorizado.idMotorizado2 != null) {
+    print('Driver 2: ${motorizado.nombresMotorizado2}');
+  }
+}
+```
+
+### Display Driver Assignment
+
+```dart
+Widget buildDriverInfo(Motorizado motorizado) {
+  return Card(
+    child: Padding(
+      padding: EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Motorizado Asignado',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(Icons.person, size: 20),
+              SizedBox(width: 8),
+              Text('Principal: ${motorizado.nombresMotorizado1}'),
+            ],
+          ),
+          if (motorizado.idMotorizado2 != null) ..[
+            SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.person_outline, size: 20),
+                SizedBox(width: 8),
+                Text('Auxiliar: ${motorizado.nombresMotorizado2}'),
+              ],
+            ),
+          ],
+        ],
+      ),
+    ),
+  );
+}
+```
+
+### Driver Selection Form
+
+```dart
+class DriverSelectionForm extends StatefulWidget {
+  final Encomienda encomienda;
+  
+  @override
+  _DriverSelectionFormState createState() => _DriverSelectionFormState();
+}
+
+class _DriverSelectionFormState extends State<DriverSelectionForm> {
+  int? selectedDriver1;
+  int? selectedDriver2;
+  
+  @override
+  Widget build(BuildContext context) {
+    final motorizados = context.watch<MotorizadoProvider>().motorizados;
+    
+    return Column(
+      children: [
+        // Primary driver (required)
+        DropdownButtonFormField<int>(
+          decoration: InputDecoration(labelText: 'Motorizado Principal *'),
+          value: selectedDriver1,
+          items: motorizados.map((m) => DropdownMenuItem(
+            value: m.idMotorizado1,
+            child: Text(m.nombresMotorizado1),
+          )).toList(),
+          onChanged: (value) => setState(() => selectedDriver1 = value),
+          validator: (value) => value == null ? 'Requerido' : null,
+        ),
+        
+        SizedBox(height: 16),
+        
+        // Second driver (optional)
+        DropdownButtonFormField<int>(
+          decoration: InputDecoration(labelText: 'Motorizado Auxiliar (opcional)'),
+          value: selectedDriver2,
+          items: [
+            DropdownMenuItem(value: null, child: Text('Ninguno')),
+            ...motorizados
+                .where((m) => m.idMotorizado1 != selectedDriver1)
+                .map((m) => DropdownMenuItem(
+                  value: m.idMotorizado1,
+                  child: Text(m.nombresMotorizado1),
+                )),
+          ],
+          onChanged: (value) => setState(() => selectedDriver2 = value),
+        ),
+        
+        SizedBox(height: 24),
+        
+        ElevatedButton(
+          onPressed: selectedDriver1 == null ? null : _assignDrivers,
+          child: Text('Asignar Motorizados'),
+        ),
+      ],
+    );
+  }
+  
+  Future<void> _assignDrivers() async {
+    final provider = context.read<EncomiendasProvider>();
+    
+    try {
+      await provider.asignarMotorizadosAEncomienda(
+        widget.encomienda.idEncomienda!,
+        selectedDriver1!,
+        selectedDriver2 ?? 0,
+      );
+      
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Motorizados asignados correctamente')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+}
+```
+
+### Filter Encomiendas by Driver
+
+```dart
+// Get encomiendas assigned to a specific driver
+final provider = context.read<EncomiendasProvider>();
+
+await provider.getEncomiendasMotorizado(
+  idSucursal: selectedBranch,
+  fechaInicio: startDate,
+  fechaFin: endDate,
+  idMotorizado: motorizado.idMotorizado1,
+);
+
+final encomiendas = provider.encomiendasMotorizado;
+```
+
+## Driver Workflow
+
+### 1. Admin Assigns Driver
+
+```dart
+// Admin selects encomienda and assigns driver(s)
+await asignarMotorizadosAEncomienda(
+  idEncomienda: encomienda.idEncomienda,
+  idMotorizado1: primaryDriverId,
+  idMotorizado2: secondaryDriverId,
+);
+```
+
+### 2. Driver Views Assigned Encomiendas
+
+```dart
+// Driver logs in and sees their assignments
+final encomiendas = await getEncomiendasMotorizado(
+  idSucursal: driver.idUbicacion,
+  fechaInicio: today,
+  fechaFin: today,
+  idMotorizado: driver.idMotorizado1,
+);
+```
+
+### 3. Driver Updates Status
+
+```dart
+// Driver picks up package
+await addEstadoEncomienda(
+  idEncomienda: encomienda.idEncomienda,
+  idEstado: 3, // En tránsito
+  comentario: 'Paquete recogido',
+);
+
+// Driver delivers package
+await addEstadoEncomienda(
+  idEncomienda: encomienda.idEncomienda,
+  idEstado: 5, // Entregado
+  comentario: 'Entregado a destinatario',
+);
+```
+
+### 4. Driver Uploads Proof
+
+```dart
+// Driver takes photo of delivered package
+final formData = FormData.fromMap({
+  'id_encomienda': encomienda.idEncomienda,
+  'imagen': await MultipartFile.fromFile(
+    imagePath,
+    filename: 'delivery_proof.jpg',
+  ),
+});
+
+await addImagenEncomienda(formData);
+```
+
+## User Types
+
+The `idTipoUsuario` field indicates user role:
+
+- **1**: Admin
+- **2**: Branch User
+- **3**: Motorizado (Driver)
+- **4**: Cliente (Customer)
+
+## Related Models
+
+- [Encomienda Model](/development/models/encomienda) - Encomiendas assigned to drivers
+- **HistorialEstado** - Status updates made by drivers
+- **Imagen** - Delivery proof photos uploaded by drivers
+- **Ubicacion** - Driver location/branch assignment
+
+## Service Methods
+
+Driver-related service methods:
+
+### MotorizadoService
+```dart
+- getMotorizados(idSucursal) - List available drivers
+```
+
+### EncomiendaService
+```dart
+- getEncomiendasMotorizado() - Get driver's assigned encomiendas
+- asignarMotorizadosAEncomienda() - Assign drivers to encomienda
+- getMotorizadosEncomienda() - Get assigned drivers for encomienda
+- addEstadoEncomienda() - Update status (used by drivers)
+- addImagenEncomienda() - Upload delivery photos
+```
+
+See [Services Overview](/development/services/overview) for implementation details.

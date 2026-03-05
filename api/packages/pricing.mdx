@@ -1,0 +1,196 @@
+---
+title: 'Calculate Shipping Price'
+description: 'Calculate shipping cost based on weight, destination, and service type'
+---
+
+## Endpoint
+
+<ParamField path="method" type="string" default="POST">
+  POST
+</ParamField>
+
+<ParamField path="endpoint" type="string">
+  `/encomienda/calcularPrecio`
+</ParamField>
+
+## Description
+
+Calculate the shipping price for a package based on multiple factors including weight, customer type, destination district, service plan, shipping type, and delivery type. The calculation includes base price, additional services, and mobility charges.
+
+## Request Body
+
+<ParamField body="kilos" type="number" required>
+  Package weight in kilograms
+</ParamField>
+
+<ParamField body="id_cliente" type="integer" required>
+  Customer ID (affects pricing based on customer plan/type)
+</ParamField>
+
+<ParamField body="id_distrito_destino" type="integer" required>
+  Destination district ID (affects pricing based on coverage zone)
+</ParamField>
+
+<ParamField body="id_plan" type="integer" required>
+  Pricing plan ID
+</ParamField>
+
+<ParamField body="tipo_envio" type="string" required>
+  Shipping type (e.g., "Express", "Regular")
+</ParamField>
+
+<ParamField body="tipo_entrega" type="string" required>
+  Delivery type (e.g., "Domicilio" for home delivery, "Agencia" for pickup at branch)
+</ParamField>
+
+## Response
+
+<ResponseField name="precio" type="number">
+  Base shipping price
+</ResponseField>
+
+<ResponseField name="servicio_adicional" type="number">
+  Additional service charge
+</ResponseField>
+
+<ResponseField name="servicio_movilidad" type="number">
+  Mobility/transportation service charge
+</ResponseField>
+
+<ResponseField name="peso_minimo" type="number">
+  Minimum weight threshold for pricing
+</ResponseField>
+
+<ResponseField name="precio_minimo" type="number">
+  Minimum price charged regardless of weight
+</ResponseField>
+
+<ResponseField name="existe_precio" type="boolean">
+  Indicates if a valid price configuration exists for the given parameters
+</ResponseField>
+
+## Request Example
+
+```json
+{
+  "kilos": 5.5,
+  "id_cliente": 123,
+  "id_distrito_destino": 20,
+  "id_plan": 2,
+  "tipo_envio": "Express",
+  "tipo_entrega": "Domicilio"
+}
+```
+
+## Response Example
+
+### Successful Calculation
+
+```json
+{
+  "precio": 45.50,
+  "servicio_adicional": 5.00,
+  "servicio_movilidad": 8.00,
+  "peso_minimo": 1.0,
+  "precio_minimo": 15.00,
+  "existe_precio": true
+}
+```
+
+**Total Cost Calculation:**
+```
+Total = precio + servicio_adicional + servicio_movilidad
+Total = 45.50 + 5.00 + 8.00 = 58.50
+```
+
+### No Price Configuration Found
+
+```json
+{
+  "precio": 0,
+  "servicio_adicional": 0,
+  "servicio_movilidad": 0,
+  "peso_minimo": 0,
+  "precio_minimo": 0,
+  "existe_precio": false
+}
+```
+
+## Pricing Components
+
+### Base Price (precio)
+The fundamental shipping cost calculated based on:
+- Package weight (`kilos`)
+- Destination district coverage zone
+- Customer's pricing plan
+- Shipping type (Express vs Regular)
+
+### Additional Service (servicio_adicional)
+Extra charges for special services such as:
+- Insurance coverage
+- Packaging materials
+- Handling of fragile items
+- Priority processing
+
+### Mobility Service (servicio_movilidad)
+Transportation and logistics charges including:
+- Home pickup (if `tipo_entrega` = "Domicilio" at origin)
+- Home delivery (if `tipo_entrega` = "Domicilio" at destination)
+- Distance-based surcharges
+- Urban/rural zone differentiation
+
+### Minimum Thresholds
+
+<ParamField name="peso_minimo" type="number">
+  If the package weight is below this threshold, pricing is based on the minimum weight rather than actual weight
+</ParamField>
+
+<ParamField name="precio_minimo" type="number">
+  The absolute minimum charge applied regardless of weight or distance
+</ParamField>
+
+## Usage Notes
+
+- Always check `existe_precio` in the response. If `false`, there is no price configuration for the requested parameters
+- The final total cost should be calculated as: `precio + servicio_adicional + servicio_movilidad`
+- If the package weight is less than `peso_minimo`, the pricing will be based on `peso_minimo`
+- The final calculated price will never be less than `precio_minimo`
+- Home delivery (`tipo_entrega` = "Domicilio") typically incurs higher `servicio_movilidad` charges
+- Express shipping (`tipo_envio` = "Express") usually has a premium added to the base price
+
+## Error Handling
+
+If the endpoint returns `existe_precio: false`, this indicates:
+- The destination district may not be in the coverage area
+- No pricing configuration exists for the selected plan
+- The shipping type or delivery type combination is not supported
+
+In such cases, you should:
+1. Verify the district is within the service coverage area
+2. Check if alternative plans are available
+3. Consider different shipping/delivery type combinations
+4. Contact customer service for custom pricing
+
+## Example Integration
+
+```dart
+// Calculate price before creating package
+final precioCalculo = await encomiendaService.calcularPrecio(
+  5.5,           // kilos
+  123,           // id_cliente
+  20,            // id_distrito_destino
+  2,             // id_plan
+  "Express",     // tipo_envio
+  "Domicilio"    // tipo_entrega
+);
+
+if (precioCalculo.existePrecio) {
+  final totalCost = precioCalculo.precio + 
+                    precioCalculo.servicioAdicional + 
+                    precioCalculo.servicioMovilidad;
+  
+  print("Total shipping cost: \$${totalCost}");
+} else {
+  print("No pricing available for this configuration");
+}
+```

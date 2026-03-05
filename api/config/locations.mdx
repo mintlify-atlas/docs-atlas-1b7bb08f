@@ -1,0 +1,245 @@
+---
+title: 'Location APIs'
+description: 'Retrieve geographic location data including departments, provinces, and districts'
+---
+
+## Overview
+
+The location APIs provide hierarchical geographic data for Peru, allowing you to fetch departments, provinces (filtered by department), and districts (filtered by province).
+
+<Tabs>
+  <Tab title="Get Departments">
+    ## Get Departments
+
+    <CodeGroup>
+    ```bash Request
+    GET /configuraciones/getDepartamentos
+    ```
+
+    ```dart Implementation
+    // lib/services/configuraciones_service.dart:72
+    Future<List<Department>> getDepartamentos() async {
+      final response = await _apiClient.get(
+        ApiEndpoints.departments,
+      );
+
+      if (response.statusCode == 200) {
+        final body = response.data is String
+            ? jsonDecode(response.data)
+            : response.data as Map<String, dynamic>;
+
+        final List<dynamic> data = body['data'] ?? [];
+
+        return data.map((e) => Department.fromJSON(e)).toList();
+      } else {
+        throw Exception('Error al obtener departamentos');
+      }
+    }
+    ```
+    </CodeGroup>
+
+    ### Response
+
+    Returns an array of department objects.
+
+    <ResponseField name="data" type="array">
+      <Expandable title="Department Object">
+        <ResponseField name="id" type="integer" required>
+          Unique identifier for the department
+        </ResponseField>
+        <ResponseField name="departamento" type="string" required>
+          Name of the department
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseExample>
+    ```json Response
+    {
+      "data": [
+        {
+          "id": 1,
+          "departamento": "Lima"
+        },
+        {
+          "id": 2,
+          "departamento": "Arequipa"
+        },
+        {
+          "id": 3,
+          "departamento": "Cusco"
+        }
+      ]
+    }
+    ```
+    </ResponseExample>
+
+    <Note>
+      Source: `lib/models/department.dart:10` - Model definition shows the structure with `id` and `departamento` fields.
+    </Note>
+  </Tab>
+
+  <Tab title="Get Provinces">
+    ## Get Provinces
+
+    <CodeGroup>
+    ```bash Request
+    GET /configuraciones/getProvincias?id_departamento={id}
+    ```
+
+    ```dart Implementation
+    // lib/services/configuraciones_service.dart:90
+    Future<List<Province>> getProvincias(int idDepartamento) async {
+      final response = await _apiClient.get(
+        '${ApiEndpoints.provinces}?id_departamento=$idDepartamento',
+      );
+
+      if (response.statusCode == 200) {
+        final body = response.data is String
+            ? jsonDecode(response.data)
+            : response.data as Map<String, dynamic>;
+
+        final List<dynamic> data = body['data'] ?? [];
+
+        return data.map((e) => Province.fromJSON(e)).toList();
+      } else {
+        throw Exception('Error al obtener provincias');
+      }
+    }
+    ```
+    </CodeGroup>
+
+    ### Query Parameters
+
+    <ParamField query="id_departamento" type="integer" required>
+      The department ID to filter provinces by
+    </ParamField>
+
+    ### Response
+
+    Returns an array of province objects for the specified department.
+
+    <ResponseField name="data" type="array">
+      <Expandable title="Province Object">
+        <ResponseField name="id" type="integer" required>
+          Unique identifier for the province
+        </ResponseField>
+        <ResponseField name="provincia" type="string" required>
+          Name of the province
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseExample>
+    ```json Response
+    {
+      "data": [
+        {
+          "id": 1,
+          "provincia": "Lima"
+        },
+        {
+          "id": 2,
+          "provincia": "Callao"
+        },
+        {
+          "id": 3,
+          "provincia": "Huaral"
+        }
+      ]
+    }
+    ```
+    </ResponseExample>
+
+    <Note>
+      Source: `lib/models/province.dart:10` - Model definition shows the structure with `id` and `provincia` fields.
+    </Note>
+  </Tab>
+
+  <Tab title="Get Districts">
+    ## Get Districts
+
+    <CodeGroup>
+    ```bash Request
+    GET /configuraciones/getDistritos?id_provincia={id}
+    ```
+
+    ```dart Implementation
+    // lib/services/configuraciones_service.dart:108
+    Future<List<District>> getDistritos(int idProvincia) async {
+      final response = await _apiClient.get(
+        '${ApiEndpoints.districts}?id_provincia=$idProvincia',
+      );
+
+      if (response.statusCode == 200) {
+        final body = response.data is String
+            ? jsonDecode(response.data)
+            : response.data as Map<String, dynamic>;
+
+        final List<dynamic> data = body['data'] ?? [];
+
+        return data.map((e) => District.fromJSON(e)).toList();
+      } else {
+        throw Exception('Error al obtener distritos');
+      }
+    }
+    ```
+    </CodeGroup>
+
+    ### Query Parameters
+
+    <ParamField query="id_provincia" type="integer" required>
+      The province ID to filter districts by
+    </ParamField>
+
+    ### Response
+
+    Returns an array of district objects for the specified province.
+
+    <ResponseField name="data" type="array">
+      <Expandable title="District Object">
+        <ResponseField name="id" type="integer" required>
+          Unique identifier for the district
+        </ResponseField>
+        <ResponseField name="distrito" type="string" required>
+          Name of the district
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseExample>
+    ```json Response
+    {
+      "data": [
+        {
+          "id": 1,
+          "distrito": "Miraflores"
+        },
+        {
+          "id": 2,
+          "distrito": "San Isidro"
+        },
+        {
+          "id": 3,
+          "distrito": "Surco"
+        }
+      ]
+    }
+    ```
+    </ResponseExample>
+
+    <Note>
+      Source: `lib/models/district.dart:10` - Model definition shows the structure with `id` and `distrito` fields.
+    </Note>
+  </Tab>
+</Tabs>
+
+## Usage Flow
+
+The location APIs follow a hierarchical pattern:
+
+1. **First**, call `getDepartamentos` to get all available departments
+2. **Second**, use a department ID to call `getProvincias` for provinces within that department
+3. **Third**, use a province ID to call `getDistritos` for districts within that province
+
+This hierarchy is commonly used in address forms and location-based filtering throughout the application.

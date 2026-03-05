@@ -1,0 +1,247 @@
+---
+title: 'Update Customer'
+description: 'Modify customer information and manage addresses'
+icon: 'pen-to-square'
+---
+
+## Update Customer
+
+Update existing customer information including contact details, location, and pricing settings.
+
+<CodeGroup>
+```http Request
+POST /clientes/updateCliente
+Content-Type: application/json
+
+{
+  "id": 1,
+  "numero_documento": "12345678",
+  "nombres": "Juan Pérez García",
+  "fecha_nacimiento": "1990-01-15",
+  "email": "juan.perez@example.com",
+  "password": "newPassword123",
+  "celular": "987654321",
+  "tipo_cliente": "Natural",
+  "tipo_pago": "Crédito",
+  "incluye_igv": 1,
+  "id_distrito": 150102,
+  "id_lista_precio": 2,
+  "id_tipo_detraccion": 1,
+  "extra_domicilio_a_domicilio": 8,
+  "extra_domicilio_a_agencia": 5,
+  "extra_agencia_a_domicilio": 5
+}
+```
+
+```json Response
+{
+  "message": "Cliente actualizado exitosamente"
+}
+```
+</CodeGroup>
+
+### Request Parameters
+
+<ParamField body="id" type="integer" required>
+  Customer ID to update
+</ParamField>
+
+<ParamField body="numero_documento" type="string" required>
+  Customer's document number (DNI/RUC)
+</ParamField>
+
+<ParamField body="nombres" type="string" required>
+  Customer's full name or company name
+</ParamField>
+
+<ParamField body="fecha_nacimiento" type="string">
+  Date of birth in YYYY-MM-DD format
+</ParamField>
+
+<ParamField body="email" type="string">
+  Customer's email address
+</ParamField>
+
+<ParamField body="password" type="string">
+  New password for customer portal (leave empty to keep current password)
+</ParamField>
+
+<ParamField body="celular" type="string" required>
+  Mobile phone number
+</ParamField>
+
+<ParamField body="tipo_cliente" type="string" required>
+  Customer type (e.g., "Natural", "Jurídico")
+</ParamField>
+
+<ParamField body="tipo_pago" type="string" required>
+  Payment type (e.g., "Contado", "Crédito")
+</ParamField>
+
+<ParamField body="incluye_igv" type="integer" required>
+  Include IGV in prices: 1 = yes, 0 = no
+</ParamField>
+
+<ParamField body="id_distrito" type="integer" required>
+  District ID where customer is located
+</ParamField>
+
+<ParamField body="id_lista_precio" type="integer" required>
+  Price list ID (plan) assigned to customer
+</ParamField>
+
+<ParamField body="id_tipo_detraccion" type="integer">
+  Detraction type ID for tax purposes
+</ParamField>
+
+<ParamField body="extra_domicilio_a_domicilio" type="integer">
+  Extra charge for home-to-home delivery
+</ParamField>
+
+<ParamField body="extra_domicilio_a_agencia" type="integer">
+  Extra charge for home-to-agency delivery
+</ParamField>
+
+<ParamField body="extra_agencia_a_domicilio" type="integer">
+  Extra charge for agency-to-home delivery
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  Success confirmation message
+</ResponseField>
+
+### Error Responses
+
+<ResponseExample>
+```json 404 Not Found
+{
+  "error": "Cliente no encontrado"
+}
+```
+
+```json 500 Internal Server Error
+{
+  "error": "Error al actualizar cliente"
+}
+```
+</ResponseExample>
+
+---
+
+## Add Customer Address
+
+Add new addresses to an existing customer's address list.
+
+<CodeGroup>
+```http Request
+POST /clientes/agregarDireccion
+Content-Type: application/json
+
+{
+  "id_cliente": 1,
+  "direcciones": [
+    {
+      "direccion": "Av. Arequipa 890",
+      "referencia": "Edificio azul, tercer piso"
+    },
+    {
+      "direccion": "Calle Las Flores 234",
+      "referencia": "Casa con reja blanca"
+    }
+  ]
+}
+```
+
+```json Response
+{
+  "message": "Direcciones agregadas exitosamente"
+}
+```
+</CodeGroup>
+
+### Request Parameters
+
+<ParamField body="id_cliente" type="integer" required>
+  Customer ID to add addresses to
+</ParamField>
+
+<ParamField body="direcciones" type="array" required>
+  Array of new addresses to add to customer
+
+  <Expandable title="Address Object">
+    <ParamField body="direccion" type="string" required>
+      Full street address
+    </ParamField>
+
+    <ParamField body="referencia" type="string">
+      Reference point or landmark for easier location
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  Success confirmation message
+</ResponseField>
+
+### Error Responses
+
+<ResponseExample>
+```json 404 Not Found
+{
+  "error": "Cliente no encontrado"
+}
+```
+
+```json 400 Bad Request
+{
+  "error": "La dirección ya existe para este cliente"
+}
+```
+
+```json 500 Internal Server Error
+{
+  "error": "Error al agregar direccion"
+}
+```
+</ResponseExample>
+
+## Update Notes
+
+<Note>
+  **Important**: When updating a customer, the `id` field is required to identify which customer to update. All other required fields must be provided even if they haven't changed.
+</Note>
+
+<Tip>
+  To update only the addresses without modifying customer information, use the **Add Customer Address** endpoint instead.
+</Tip>
+
+## Address Management
+
+The address management system allows customers to have multiple delivery locations:
+
+- Each address must have a `direccion` (street address)
+- The `referencia` field is optional but recommended for easier delivery location
+- When adding addresses, they are appended to the existing address list
+- Each address gets a unique ID assigned by the system
+
+### Address Examples
+
+**Good address format**:
+```json
+{
+  "direccion": "Av. Javier Prado Este 4200, San Borja",
+  "referencia": "Edificio corporativo, torre B, piso 5"
+}
+```
+
+**Minimal address**:
+```json
+{
+  "direccion": "Jr. Lampa 345, Cercado de Lima",
+  "referencia": ""
+}
+```

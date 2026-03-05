@@ -1,0 +1,175 @@
+---
+title: 'Create Package'
+description: 'Create a new package/shipment (encomienda) in the system'
+---
+
+## Endpoint
+
+<ParamField path="method" type="string" default="POST">
+  POST
+</ParamField>
+
+<ParamField path="endpoint" type="string">
+  `/encomienda/createEncomienda`
+</ParamField>
+
+## Request Body
+
+### Sender Information
+
+<ParamField body="remitente_id" type="integer">
+  Sender's customer ID
+</ParamField>
+
+<ParamField body="remitente_documento" type="string">
+  Sender's identification document number
+</ParamField>
+
+<ParamField body="remitente_direccion" type="string">
+  Sender's address
+</ParamField>
+
+<ParamField body="remitente_contacto_nombre" type="string">
+  Sender's contact person name
+</ParamField>
+
+<ParamField body="remitente_contacto_celular" type="string">
+  Sender's contact phone number
+</ParamField>
+
+<ParamField body="remitente_id_distrito_a_domicilio" type="integer">
+  District ID for sender's address (required if pickup type is home delivery)
+</ParamField>
+
+### Recipient Information
+
+<ParamField body="destinatario_id" type="integer">
+  Recipient's customer ID
+</ParamField>
+
+<ParamField body="destinatario_documento" type="string">
+  Recipient's identification document number
+</ParamField>
+
+<ParamField body="destinatario_contacto_nombre" type="string">
+  Recipient's contact person name
+</ParamField>
+
+<ParamField body="destinatario_contacto_celular" type="string">
+  Recipient's contact phone number
+</ParamField>
+
+<ParamField body="destinatario_direccion" type="string">
+  Recipient's delivery address
+</ParamField>
+
+<ParamField body="destinatario_id_distrito_a_domicilio" type="integer">
+  District ID for recipient's address (required if delivery type is home delivery)
+</ParamField>
+
+### Package Details
+
+<ParamField body="tipo_entrega" type="string" required>
+  Delivery type (e.g., "Domicilio", "Agencia")
+</ParamField>
+
+<ParamField body="tipo_envio" type="string" required>
+  Shipping type
+</ParamField>
+
+<ParamField body="id_agencia_destino" type="integer">
+  Destination branch/agency ID
+</ParamField>
+
+<ParamField body="fecha_entrega" type="string">
+  Expected delivery date
+</ParamField>
+
+<ParamField body="costo_total" type="string" required>
+  Total shipping cost
+</ParamField>
+
+<ParamField body="cantidad" type="string" required>
+  Number of packages/items
+</ParamField>
+
+<ParamField body="kilos" type="string" required>
+  Weight in kilograms
+</ParamField>
+
+<ParamField body="observacion" type="string">
+  Additional observations or notes
+</ParamField>
+
+<ParamField body="tipo_pago" type="string" required>
+  Payment type
+</ParamField>
+
+<ParamField body="guia_remitente" type="string">
+  Sender's reference/tracking number
+</ParamField>
+
+### Payment Information (conditional)
+
+<ParamField body="banco" type="string">
+  Bank name (required if payment type is deposit)
+</ParamField>
+
+<ParamField body="nro_operacion" type="string">
+  Operation/transaction number (required if payment type is deposit)
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the package was created successfully
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Response message
+</ResponseField>
+
+## Request Example
+
+```json
+{
+  "tipo_entrega": "Domicilio",
+  "tipo_envio": "Express",
+  "id_agencia_destino": 5,
+  "remitente_id": 123,
+  "remitente_documento": "12345678",
+  "remitente_direccion": "Av. Principal 123",
+  "remitente_contacto_nombre": "Juan Pérez",
+  "remitente_contacto_celular": "987654321",
+  "remitente_id_distrito_a_domicilio": 15,
+  "destinatario_id": 456,
+  "destinatario_documento": "87654321",
+  "destinatario_contacto_nombre": "María García",
+  "destinatario_contacto_celular": "912345678",
+  "destinatario_direccion": "Jr. Los Olivos 456",
+  "destinatario_id_distrito_a_domicilio": 20,
+  "fecha_entrega": "2026-03-10",
+  "costo_total": "50.00",
+  "cantidad": "2",
+  "kilos": "5.5",
+  "observacion": "Fragile items",
+  "tipo_pago": "Efectivo",
+  "guia_remitente": "GUIDE-2026-001"
+}
+```
+
+## Response Example
+
+```json
+{
+  "success": true,
+  "message": "Encomienda creada exitosamente"
+}
+```
+
+## Notes
+
+- The `remitente_id_distrito_a_domicilio` field is required only when the pickup type (`tipo_entrega`) involves home pickup
+- The `destinatario_id_distrito_a_domicilio` field is required only when the delivery type (`tipo_entrega`) involves home delivery
+- When `tipo_pago` is set to "Deposito", both `banco` and `nro_operacion` fields are required
+- All monetary values should be provided as strings with decimal notation

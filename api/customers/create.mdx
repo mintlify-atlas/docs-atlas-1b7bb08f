@@ -1,0 +1,185 @@
+---
+title: 'Create Customer'
+description: 'Register a new customer in the system'
+icon: 'user-plus'
+---
+
+## Create Customer
+
+Register a new customer with their basic information and addresses.
+
+<CodeGroup>
+```http Request
+POST /clientes/createCliente
+Content-Type: application/json
+
+{
+  "numero_documento": "12345678",
+  "nombres": "Juan Pérez",
+  "fecha_nacimiento": "1990-01-15",
+  "email": "juan.perez@example.com",
+  "password": "securePassword123",
+  "celular": "987654321",
+  "tipo_cliente": "Natural",
+  "tipo_pago": "Contado",
+  "incluye_igv": 1,
+  "id_distrito": 150101,
+  "id_lista_precio": 1,
+  "id_tipo_detraccion": 1,
+  "extra_domicilio_a_domicilio": 5,
+  "extra_domicilio_a_agencia": 3,
+  "extra_agencia_a_domicilio": 3,
+  "direcciones": [
+    {
+      "direccion": "Av. Javier Prado 123",
+      "referencia": "Cerca al centro comercial"
+    },
+    {
+      "direccion": "Jr. Los Olivos 456",
+      "referencia": "Frente al parque"
+    }
+  ]
+}
+```
+
+```json Response
+{
+  "message": "Cliente creado exitosamente"
+}
+```
+</CodeGroup>
+
+### Request Parameters
+
+<ParamField body="numero_documento" type="string" required>
+  Customer's document number (DNI for individuals, RUC for companies)
+</ParamField>
+
+<ParamField body="nombres" type="string" required>
+  Customer's full name or company name
+</ParamField>
+
+<ParamField body="fecha_nacimiento" type="string">
+  Date of birth in YYYY-MM-DD format
+</ParamField>
+
+<ParamField body="email" type="string">
+  Customer's email address
+</ParamField>
+
+<ParamField body="password" type="string">
+  Password for customer portal access
+</ParamField>
+
+<ParamField body="celular" type="string" required>
+  Mobile phone number
+</ParamField>
+
+<ParamField body="tipo_cliente" type="string" required>
+  Customer type. Common values:
+  - `Natural` - Individual
+  - `Jurídico` - Company
+</ParamField>
+
+<ParamField body="tipo_pago" type="string" required>
+  Payment type (e.g., "Contado", "Crédito")
+</ParamField>
+
+<ParamField body="incluye_igv" type="integer" required>
+  Whether prices include IGV (tax):
+  - `1` - Include IGV
+  - `0` - Exclude IGV
+</ParamField>
+
+<ParamField body="id_distrito" type="integer" required>
+  District ID where customer is located
+</ParamField>
+
+<ParamField body="id_lista_precio" type="integer" required>
+  Price list ID (plan) assigned to customer
+</ParamField>
+
+<ParamField body="id_tipo_detraccion" type="integer">
+  Detraction type ID for tax purposes
+</ParamField>
+
+<ParamField body="extra_domicilio_a_domicilio" type="integer">
+  Extra charge for home-to-home delivery service
+</ParamField>
+
+<ParamField body="extra_domicilio_a_agencia" type="integer">
+  Extra charge for home-to-agency delivery service
+</ParamField>
+
+<ParamField body="extra_agencia_a_domicilio" type="integer">
+  Extra charge for agency-to-home delivery service
+</ParamField>
+
+<ParamField body="direcciones" type="array" required>
+  Array of customer addresses
+
+  <Expandable title="Address Object">
+    <ParamField body="direccion" type="string" required>
+      Full street address
+    </ParamField>
+
+    <ParamField body="referencia" type="string">
+      Reference point or landmark for easier location
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Response
+
+Returns a success message when the customer is created successfully.
+
+<ResponseField name="message" type="string">
+  Success confirmation message
+</ResponseField>
+
+### Error Responses
+
+<ResponseExample>
+```json 400 Bad Request
+{
+  "error": "El número de documento ya está registrado"
+}
+```
+
+```json 500 Internal Server Error
+{
+  "error": "Error al registrar cliente"
+}
+```
+</ResponseExample>
+
+## Customer Types
+
+Customers can be classified into different types based on their legal status:
+
+- **Natural**: Individual person with DNI document
+- **Jurídico**: Company or legal entity with RUC document
+
+## Payment Types
+
+Common payment type values:
+
+- **Contado**: Cash payment (immediate)
+- **Crédito**: Credit payment (deferred)
+
+## Address Structure
+
+Each customer can have multiple delivery addresses. The address object contains:
+
+- **direccion**: The complete street address
+- **referencia**: Optional reference point to help locate the address (e.g., "Near the shopping mall", "In front of the park")
+
+## Extra Charges
+
+Customers can have custom extra charges applied for different delivery service types:
+
+- **extra_domicilio_a_domicilio**: Additional fee for door-to-door delivery
+- **extra_domicilio_a_agencia**: Additional fee for home pickup to agency delivery
+- **extra_agencia_a_domicilio**: Additional fee for agency pickup to home delivery
+
+These charges are added on top of the standard delivery prices.

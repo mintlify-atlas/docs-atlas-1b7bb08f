@@ -1,0 +1,362 @@
+---
+title: 'API Setup'
+description: 'Configure backend API connection, authentication, and endpoints'
+icon: 'plug'
+---
+
+## Overview
+
+App Courier uses Dio HTTP client for all API communications. The API client handles authentication, request/response interceptors, and error handling automatically.
+
+## API Client Configuration
+
+The main API client is located in `lib/core/api/api_client.dart` and provides a centralized HTTP client with built-in authentication.
+
+### Base Configuration
+
+```dart
+import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class ApiClient {
+  late final Dio _dio;
+
+  ApiClient() {
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: 'https://api.eisegmi.facturador.es',
+        validateStatus: (status) {
+          return status != null && status >= 200 && status < 300;
+        },
+        connectTimeout: const Duration(seconds: 20),
+        receiveTimeout: const Duration(seconds: 20),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
+  }
+}
+```
+
+## Configuration Parameters
+
+<ParamField path="baseUrl" type="String" required>
+  The base URL for all API requests. Currently set to `https://api.eisegmi.facturador.es`
+</ParamField>
+
+<ParamField path="connectTimeout" type="Duration" default="20 seconds">
+  Maximum time to wait for connection establishment
+</ParamField>
+
+<ParamField path="receiveTimeout" type="Duration" default="20 seconds">
+  Maximum time to wait for response after connection
+</ParamField>
+
+<ParamField path="headers" type="Map<String, String>">
+  Default headers sent with every request. Includes `Content-Type: application/json`
+</ParamField>
+
+<Warning>
+  The API base URL is currently hardcoded. For production deployments, move this to an environment-specific configuration file.
+</Warning>
+
+## Changing the API Base URL
+
+To use a different API endpoint:
+
+1. Open `lib/core/api/api_client.dart`
+2. Modify the `baseUrl` in the `BaseOptions`:
+
+```dart
+BaseOptions(
+  baseUrl: 'https://your-api-domain.com',
+  // ... rest of configuration
+)
+```
+
+For environment-specific URLs, use the Environment class:
+
+```dart
+import 'package:courier/core/config/environment.dart';
+
+BaseOptions(
+  baseUrl: Environment.isDevelopment 
+    ? 'https://dev-api.example.com'
+    : 'https://api.example.com',
+  // ... rest of configuration
+)
+```
+
+## Authentication
+
+The API client automatically handles Bearer token authentication using interceptors.
+
+### Token Management
+
+Authentication tokens are stored securely using SharedPreferences:
+
+```dart
+_dio.interceptors.add(
+  InterceptorsWrapper(
+    onRequest: (options, handler) async {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token != null) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+
+      return handler.next(options);
+    },
+  ),
+);
+```
+
+### How It Works
+
+<Steps>
+  <Step title="User Login">
+    When a user logs in successfully, the authentication token is stored in SharedPreferences with the key `'token'`.
+  </Step>
+  
+  <Step title="Automatic Injection">
+    For every API request, the interceptor retrieves the token and adds it to the `Authorization` header as `Bearer {token}`.
+  </Step>
+  
+  <Step title="Request Sent">
+    The request is sent with the authentication header automatically attached.
+  </Step>
+</Steps>
+
+## Error Handling
+
+The API client includes automatic error handling for common scenarios.
+
+### 401 Unauthorized Handler
+
+```dart
+onError: (error, handler) async {
+  if (error.response?.statusCode == 401) {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('token');
+    // Redirect to login when implemented
+  }
+  return handler.next(error);
+}
+```
+
+<Info>
+  When a 401 Unauthorized response is received, the stored token is automatically cleared. You should implement navigation to the login screen in this handler.
+</Info>
+
+### Status Code Validation
+
+The client validates response status codes:
+
+```dart
+validateStatus: (status) {
+  return status != null && status >= 200 && status < 300;
+}
+```
+
+Only 2xx status codes are considered successful. All other codes trigger the error handler.
+
+## API Methods
+
+The ApiClient provides standard HTTP methods:
+
+### GET Request
+
+```dart
+Future<Response> get(String path) async {
+  return await _dio.get(path);
+}
+```
+
+**Example:**
+```dart
+final response = await apiClient.get('/deliveries');
+```
+
+### POST Request
+
+```dart
+Future<Response> post(String path, {dynamic data, Options? options}) async {
+  return await _dio.post(path, data: data, options: options);
+}
+```
+
+**Example:**
+```dart
+final response = await apiClient.post(
+  '/deliveries',
+  data: {'status': 'delivered'},
+);
+```
+
+### PUT Request
+
+```dart
+Future<Response> put(String path, {dynamic data}) async {
+  return await _dio.put(path, data: data);
+}
+```
+
+**Example:**
+```dart
+final response = await apiClient.put(
+  '/deliveries/123',
+  data: {'status': 'in_transit'},
+);
+```
+
+### DELETE Request
+
+```dart
+Future<Response> delete(String path) async {
+  return await _dio.delete(path);
+}
+```
+
+**Example:**
+```dart
+final response = await apiClient.delete('/deliveries/123');
+```
+
+## Using the API Client
+
+### Dependency Injection
+
+Create a single instance and inject it where needed:
+
+```dart
+final apiClient = ApiClient();
+
+// In a service
+class DeliveryService {
+  final ApiClient apiClient;
+  
+  DeliveryService(this.apiClient);
+  
+  Future<List<Delivery>> getDeliveries() async {
+    final response = await apiClient.get('/deliveries');
+    // Parse and return deliveries
+  }
+}
+```
+
+### With Provider
+
+```dart
+MultiProvider(
+  providers: [
+    Provider<ApiClient>(create: (_) => ApiClient()),
+    ProxyProvider<ApiClient, DeliveryService>(
+      update: (_, apiClient, __) => DeliveryService(apiClient),
+    ),
+  ],
+  child: MyApp(),
+)
+```
+
+## Advanced Configuration
+
+### Custom Headers
+
+Add custom headers to specific requests:
+
+```dart
+final response = await apiClient.post(
+  '/upload',
+  data: formData,
+  options: Options(
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  ),
+);
+```
+
+### Timeout Customization
+
+Override timeout for specific requests:
+
+```dart
+final response = await apiClient.get(
+  '/large-data',
+  options: Options(
+    receiveTimeout: const Duration(seconds: 60),
+  ),
+);
+```
+
+### Request Logging
+
+Add logging interceptor for debugging:
+
+```dart
+import 'package:dio/dio.dart';
+
+_dio.interceptors.add(
+  LogInterceptor(
+    requestBody: true,
+    responseBody: true,
+    error: true,
+  ),
+);
+```
+
+<Warning>
+  Only enable request/response logging in development mode. Disable it in production to avoid performance issues and security risks.
+</Warning>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Connection Timeout Errors">
+    If you're experiencing frequent timeout errors:
+    
+    - Check your network connection
+    - Verify the API server is accessible
+    - Increase `connectTimeout` and `receiveTimeout` values
+    - Check for firewall or proxy restrictions
+  </Accordion>
+  
+  <Accordion title="401 Unauthorized">
+    If you're getting 401 errors:
+    
+    - Verify the token is being stored correctly after login
+    - Check the token format (should be Bearer token)
+    - Ensure the token hasn't expired
+    - Verify the SharedPreferences key is `'token'`
+  </Accordion>
+  
+  <Accordion title="CORS Issues">
+    CORS issues typically occur in web development:
+    
+    - Configure your backend to allow requests from your domain
+    - Add appropriate CORS headers on the server
+    - Flutter mobile apps don't face CORS restrictions
+  </Accordion>
+  
+  <Accordion title="SSL Certificate Errors">
+    If you encounter SSL/TLS errors:
+    
+    - Ensure the API server has a valid SSL certificate
+    - For development, you can bypass SSL (not recommended for production)
+    - Check device date/time settings
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Environment Config" icon="gear" href="/configuration/environment">
+    Learn about environment variables and build modes
+  </Card>
+  
+  <Card title="Permissions" icon="shield-check" href="/configuration/permissions">
+    Configure required Android and iOS permissions
+  </Card>
+</CardGroup>

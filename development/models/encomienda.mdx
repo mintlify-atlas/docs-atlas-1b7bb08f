@@ -1,0 +1,441 @@
+---
+title: Encomienda Model
+description: Complete documentation of the Encomienda data model
+---
+
+## Overview
+
+The `Encomienda` class represents a shipment/package in the App Courier system. It contains comprehensive information about the sender (remitente), recipient (destinatario), delivery details, and tracking information.
+
+**Location**: `lib/models/encomienda.dart`
+
+## Class Definition
+
+```dart
+class Encomienda {
+  // Identification
+  String? id;
+  int? idEncomienda;
+  int? idUsuarioSolicita;
+  String? serieRemito;
+  
+  // Branch information
+  String? agenciaOrigen;
+  String? agenciaDestino;
+  int? idAgenciaDestino;
+  
+  // Sender (Remitente) information
+  int? idRemitente;
+  String? remitente;
+  String? remitenteDocumento;
+  String? remitenteDireccion;
+  String? remitenteReferencia;
+  String? remitenteContacto;
+  String? remitenteCelular;
+  int? remitenteIdDepartamentoDomicilio;
+  int? remitenteIdProvinciaDomicilio;
+  int? remitenteIdDistritoDomicilio;
+  String? remitenteDepartamentoDomicilio;
+  String? remitenteProvinciaDomicilio;
+  String? remitenteDistritoDomicilio;
+  
+  // Recipient (Destinatario) information
+  int? idDestinatario;
+  String? destinatario;
+  String? destinatarioDocumento;
+  String? destinatarioDireccion;
+  String? destinatarioReferencia;
+  String? destinatarioContacto;
+  String? destinatarioCelular;
+  int? destinatarioIdDepartamentoDomicilio;
+  int? destinatarioIdProvinciaDomicilio;
+  int? destinatarioIdDistritoDomicilio;
+  String? destinatarioDepartamentoDomicilio;
+  String? destinatarioProvinciaDomicilio;
+  String? destinatarioDistritoDomicilio;
+  
+  // Shipment details
+  String? tipoPago;
+  String? tipoEntrega;
+  String? tipoEnvio;
+  String? costoTotal;
+  String? kg;
+  String? fecha;
+  String? hora;
+  String? fechaEntrega;
+  String? cantidad;
+  String? medio;
+  String? observacion;
+  String? guiaRemitente;
+  
+  // Status tracking
+  String? ultimoEstado;
+  String? colorEstado;
+  String? motorizado;
+  int? cantidadTotal;
+  
+  // Payment details
+  String? banco;
+  String? nroOperacion;
+}
+```
+
+## Constructor
+
+```dart
+Encomienda({
+  this.id,
+  this.idEncomienda,
+  this.serieRemito,
+  this.agenciaOrigen,
+  this.agenciaDestino,
+  // Sender fields
+  this.idRemitente,
+  this.remitente,
+  this.remitenteDocumento,
+  this.remitenteDireccion,
+  // Recipient fields
+  this.idDestinatario,
+  this.destinatario,
+  this.destinatarioDocumento,
+  // Shipment fields
+  this.tipoPago,
+  this.tipoEntrega,
+  this.tipoEnvio,
+  this.costoTotal,
+  // ... other fields
+});
+```
+
+## JSON Serialization
+
+### fromJson (Standard API Response)
+
+Parses encomienda data from the standard list endpoint:
+
+```dart
+factory Encomienda.fromJson(Map<String, dynamic> json) {
+  return Encomienda(
+    id: json['id'],
+    serieRemito: json['serie_remito'],
+    agenciaOrigen: json['agencia_origen'],
+    agenciaDestino: json['agencia_destino'],
+    
+    remitente: json['remitente_nombre'],
+    remitenteDocumento: json['remitente_documento'],
+    remitenteDireccion: json['remitente_direccion'],
+    remitenteCelular: json['celularremitente'],
+    
+    destinatario: json['destinatario_nombre'],
+    destinatarioDocumento: json['destinatario_documento'],
+    destinatarioDireccion: json['destinatario_direccion'],
+    destinatarioCelular: json['celulardestino'],
+    
+    tipoPago: json['tipo_pago'],
+    tipoEntrega: json['tipo_entrega'],
+    costoTotal: json['costo_total'],
+    kg: json['kg'],
+    fecha: json['fecha'],
+    fechaEntrega: json['fecha_entrega'],
+    cantidad: json['cantidad'],
+    medio: json['medio'],
+    observacion: json['observacion'],
+    ultimoEstado: json['ultimo_estado'],
+    colorEstado: json['color_estado'],
+    motorizado: json['motorizado'],
+    cantidadTotal: json['cantidad_total'],
+    tipoEnvio: json['tipo_envio'],
+  );
+}
+```
+
+**Usage**:
+```dart
+final encomienda = Encomienda.fromJson(jsonResponse['data']);
+```
+
+### fromSolicitudJson (Solicitud API Response)
+
+Parses encomienda data from solicitud-specific endpoints:
+
+```dart
+factory Encomienda.fromSolicitudJson(Map<String, dynamic> json) {
+  return Encomienda(
+    id: json['id'].toString(),
+    fecha: json['fecha'],
+    hora: json['hora'],
+    idUsuarioSolicita: json['id_usuario_solicita'],
+    tipoEnvio: json['tipo_envio'],
+    tipoPago: json['tipo_pago'],
+    tipoEntrega: json['tipo_entrega'],
+    cantidad: json['cantidad'].toString(),
+    
+    remitenteIdDistritoDomicilio: json['id_distrito_origen'],
+    remitenteDireccion: json['origen_direccion'],
+    remitenteReferencia: json['origen_referencia'],
+    
+    destinatarioIdDistritoDomicilio: json['id_distrito_destino'],
+    destinatarioDireccion: json['destino_direccion'],
+    destinatarioReferencia: json['destino_referencia'],
+    
+    remitenteDocumento: json['remitente_documento'],
+    remitente: json['remitente_nombre'],
+    remitenteCelular: json['remitente_celular'],
+    
+    destinatarioDocumento: json['destinatario_documento'],
+    destinatario: json['destinatario_nombre'],
+    destinatarioCelular: json['destinatario_celular'],
+    
+    costoTotal: json['precio'],
+    idEncomienda: json['id_encomienda'],
+    
+    // Geographic information
+    remitenteDepartamentoDomicilio: json['dep_origen_dom'],
+    remitenteProvinciaDomicilio: json['prov_origen_dom'],
+    remitenteDistritoDomicilio: json['dist_origen_dom'],
+    destinatarioDepartamentoDomicilio: json['dep_destino_dom'],
+    destinatarioProvinciaDomicilio: json['prov_destino_dom'],
+    destinatarioDistritoDomicilio: json['dist_destino_dom'],
+    
+    serieRemito: json['numero_remito'],
+  );
+}
+```
+
+**Usage**:
+```dart
+final encomienda = Encomienda.fromSolicitudJson(solicitudData);
+```
+
+### toJson (Create Encomienda)
+
+Serializes encomienda for creation endpoint:
+
+```dart
+Map<String, dynamic> toJson() {
+  return {
+    "tipo_entrega": tipoEntrega,
+    "tipo_envio": tipoEnvio,
+    "id_agencia_destino": idAgenciaDestino,
+    
+    // Sender information
+    "remitente_id": idRemitente,
+    "remitente_documento": remitenteDocumento,
+    "remitente_direccion": remitenteDireccion,
+    "remitente_contacto_nombre": remitenteContacto,
+    "remitente_contacto_celular": remitenteCelular,
+    "remitente_id_distrito_a_domicilio": remitenteIdDistritoDomicilio,
+    
+    // Recipient information
+    "destinatario_id": idDestinatario,
+    "destinatario_documento": destinatarioDocumento,
+    "destinatario_contacto_nombre": destinatarioContacto,
+    "destinatario_contacto_celular": destinatarioCelular,
+    "destinatario_direccion": destinatarioDireccion,
+    "destinatario_id_distrito_a_domicilio": destinatarioIdDistritoDomicilio,
+    
+    // Shipment details
+    "fecha_entrega": fechaEntrega,
+    "costo_total": costoTotal,
+    "cantidad": cantidad,
+    "kilos": kg,
+    "observacion": observacion,
+    "tipo_pago": tipoPago,
+    "guia_remitente": guiaRemitente,
+    
+    // Payment details (conditional)
+    "banco": banco,
+    "nro_operacion": nroOperacion,
+  };
+}
+```
+
+**Usage**:
+```dart
+final json = encomienda.toJson();
+await api.post('/encomienda/createEncomienda', data: json);
+```
+
+### solicitudEnvioToJson (Create Solicitud)
+
+Serializes encomienda for solicitud creation:
+
+```dart
+Map<String, dynamic> solicitudEnvioToJson() {
+  return {
+    "id_usuario_solicita": idRemitente,
+    "tipo_envio": tipoEnvio,
+    "tipo_entrega": tipoEntrega,
+    "tipo_pago": tipoPago,
+    
+    "id_distrito_origen": remitenteIdDistritoDomicilio,
+    "origen_direccion": remitenteDireccion,
+    "origen_referencia": remitenteReferencia,
+    
+    "id_distrito_destino": destinatarioIdDistritoDomicilio,
+    "destino_direccion": destinatarioDireccion,
+    "destino_referencia": destinatarioReferencia,
+    
+    "cantidad": cantidad,
+    "precio": costoTotal,
+    
+    "remitente_documento": remitenteDocumento,
+    "remitente_nombre": remitente,
+    "remitente_celular": remitenteCelular,
+    
+    "destinatario_documento": destinatarioDocumento,
+    "destinatario_nombre": destinatario,
+    "destinatario_celular": destinatarioCelular,
+  };
+}
+```
+
+## Field Groups
+
+<Accordion title="Identification Fields">
+- **id**: Unique encomienda ID (String)
+- **idEncomienda**: Numeric encomienda ID
+- **idUsuarioSolicita**: User who created the solicitud
+- **serieRemito**: Tracking number (e.g., "REM-2024-001234")
+</Accordion>
+
+<Accordion title="Branch Fields">
+- **agenciaOrigen**: Origin branch name
+- **agenciaDestino**: Destination branch name
+- **idAgenciaDestino**: Destination branch ID
+</Accordion>
+
+<Accordion title="Sender (Remitente) Fields">
+- **idRemitente**: Customer ID of sender
+- **remitente**: Full name
+- **remitenteDocumento**: DNI/RUC
+- **remitenteDireccion**: Address
+- **remitenteReferencia**: Address reference
+- **remitenteContacto**: Contact person name
+- **remitenteCelular**: Phone number
+- **Geographic IDs**: Department, Province, District IDs
+- **Geographic Names**: Department, Province, District names
+</Accordion>
+
+<Accordion title="Recipient (Destinatario) Fields">
+- **idDestinatario**: Customer ID of recipient
+- **destinatario**: Full name
+- **destinatarioDocumento**: DNI/RUC
+- **destinatarioDireccion**: Address
+- **destinatarioReferencia**: Address reference
+- **destinatarioContacto**: Contact person name
+- **destinatarioCelular**: Phone number
+- **Geographic IDs**: Department, Province, District IDs
+- **Geographic Names**: Department, Province, District names
+</Accordion>
+
+<Accordion title="Shipment Details">
+- **tipoPago**: Payment type ("Efectivo", "Deposito", etc.)
+- **tipoEntrega**: Delivery type ("Agencia a Agencia", "Domicilio a Domicilio", etc.)
+- **tipoEnvio**: Shipping type ("Normal", "Express")
+- **costoTotal**: Total cost
+- **kg**: Weight in kilograms
+- **cantidad**: Number of packages
+- **fecha**: Creation date
+- **hora**: Creation time
+- **fechaEntrega**: Delivery date
+- **medio**: Transport method
+- **observacion**: Additional notes
+- **guiaRemitente**: Sender's tracking reference
+</Accordion>
+
+<Accordion title="Tracking Fields">
+- **ultimoEstado**: Current status text
+- **colorEstado**: Status color for UI
+- **motorizado**: Assigned driver name(s)
+- **cantidadTotal**: Total quantity
+</Accordion>
+
+<Accordion title="Payment Fields">
+- **banco**: Bank name (for deposit payments)
+- **nroOperacion**: Operation number (for deposit payments)
+</Accordion>
+
+## Usage Examples
+
+### Create New Encomienda
+
+```dart
+final encomienda = Encomienda(
+  idRemitente: 123,
+  remitenteDocumento: '12345678',
+  remitenteDireccion: 'Av. Principal 123',
+  remitenteCelular: '987654321',
+  
+  idDestinatario: 456,
+  destinatarioDocumento: '87654321',
+  destinatarioDireccion: 'Jr. Secundario 456',
+  destinatarioCelular: '912345678',
+  
+  tipoEntrega: 'Agencia a Agencia',
+  tipoEnvio: 'Normal',
+  tipoPago: 'Efectivo',
+  costoTotal: '25.00',
+  kg: '2.5',
+  cantidad: '1',
+  fechaEntrega: '2024-03-10',
+  idAgenciaDestino: 2,
+);
+
+await encomiendaService.createEncomienda(encomienda);
+```
+
+### Display Encomienda Details
+
+```dart
+Widget buildEncomiendaCard(Encomienda encomienda) {
+  return Card(
+    child: Column(
+      children: [
+        Text('Remito: ${encomienda.serieRemito}'),
+        Text('Estado: ${encomienda.ultimoEstado}'),
+        Text('Remitente: ${encomienda.remitente}'),
+        Text('Destinatario: ${encomienda.destinatario}'),
+        Text('Costo: S/ ${encomienda.costoTotal}'),
+      ],
+    ),
+  );
+}
+```
+
+### Parse from API Response
+
+```dart
+// Standard list response
+final response = await api.get('/encomienda/getEncomiendas?...');
+final List<dynamic> data = response.data['data'];
+final encomiendas = data.map((e) => Encomienda.fromJson(e)).toList();
+
+// Solicitud response
+final solicitudData = await api.get('/solicitudesapp/getSolicitudesApp?...');
+final List<dynamic> solicitudes = solicitudData.data['data'];
+final encomiendas = solicitudes.map((e) => Encomienda.fromSolicitudJson(e)).toList();
+```
+
+## Related Models
+
+- [Customer Model](/development/models/customer) - Sender and recipient details
+- [Motorizado Model](/development/models/motorizado) - Driver assignment
+- **HistorialEstado** - Status history tracking
+- **Estado** - Available status transitions
+- **PrecioCalculo** - Price calculation results
+- **Imagen** - Delivery proof images
+
+## Service Methods
+
+The `EncomiendaService` provides methods for working with encomiendas:
+
+- `getEncomiendas()` - List encomiendas with filters
+- `createEncomienda()` - Create new encomienda
+- `getEncomiendaByRemito()` - Find by tracking number
+- `getHistorialEstados()` - Get status history
+- `addEstadoEncomienda()` - Add new status
+- `calcularPrecio()` - Calculate shipping cost
+- `asignarMotorizadosAEncomienda()` - Assign drivers
+
+See [Services Overview](/development/services/overview) for details.

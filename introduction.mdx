@@ -1,0 +1,215 @@
+---
+title: Introduction
+description: Learn about App Courier, a comprehensive Flutter-based courier and package delivery management system
+---
+
+## What is App Courier?
+
+App Courier is a modern, full-featured courier and package delivery management system built with Flutter. It provides a complete solution for managing package deliveries, tracking shipments, and coordinating between administrators, customers, and delivery drivers.
+
+The application streamlines the entire delivery workflow from package creation to final delivery, with real-time tracking, status updates, and comprehensive reporting capabilities.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Multi-Role System" icon="users">
+    Three distinct user roles (Admin, Customer, Driver) with role-specific dashboards and functionality
+  </Card>
+  <Card title="Package Management" icon="box">
+    Complete package lifecycle management from creation to delivery with status tracking
+  </Card>
+  <Card title="Real-time Tracking" icon="location-dot">
+    Track deliveries in real-time with detailed status updates and history
+  </Card>
+  <Card title="Customer Portal" icon="user">
+    Self-service portal for customers to request shipments and track their packages
+  </Card>
+  <Card title="Driver Assignment" icon="truck">
+    Intelligent driver assignment system with delivery history tracking
+  </Card>
+  <Card title="PDF Generation" icon="file-pdf">
+    Generate delivery receipts and reports with built-in PDF functionality
+  </Card>
+</CardGroup>
+
+## Architecture Overview
+
+App Courier follows a clean, layered architecture pattern that separates concerns and ensures maintainability:
+
+### Technology Stack
+
+- **Framework**: Flutter 3.7.2+
+- **State Management**: Provider pattern
+- **API Communication**: Dio HTTP client
+- **Local Storage**: SharedPreferences
+- **UI Components**: Material Design
+
+### Core Architecture
+
+```
+lib/
+├── main.dart                 # Application entry point
+├── app.dart                  # Root app widget
+├── core/
+│   ├── api/                 # API client and HTTP configuration
+│   ├── config/              # Environment and app configuration
+│   ├── widgets/             # Reusable UI components
+│   ├── utils/               # Helper functions and utilities
+│   └── constants/           # App-wide constants
+├── models/                  # Data models
+├── providers/               # State management (Provider)
+├── services/                # Business logic and API services
+├── screens/                 # UI screens
+│   ├── auth/               # Authentication screens
+│   ├── Modulos-Admin/      # Admin module screens
+│   ├── Modulos-Cliente/    # Customer module screens
+│   └── Modulos-Motorizado/ # Driver module screens
+└── routes/                  # Navigation and routing
+```
+
+### Application Flow
+
+<Steps>
+  <Step title="Initialization">
+    The app initializes with portrait-only orientation and sets up the API client with base URL configuration
+    
+    ```dart
+    // main.dart:26-33
+    void main() async {
+      WidgetsFlutterBinding.ensureInitialized();
+      
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+      ]);
+      
+      final apiClient = ApiClient();
+    ```
+  </Step>
+  
+  <Step title="Provider Setup">
+    Multiple providers are initialized for state management across different features:
+    
+    - **AuthProvider**: Authentication and session management
+    - **CustomersProvider**: Customer data management
+    - **EncomiendasProvider**: Package/shipment management
+    - **SucursalesProvider**: Branch/location management
+    - **ConfiguracionesProvider**: App configuration
+    - **UsersProvider**: User management
+    - **MotorizadoProvider**: Driver management
+    - **DashboardProvider**: Dashboard data and analytics
+    - **SolicitudProvider**: Delivery request management
+  </Step>
+  
+  <Step title="Authentication">
+    Users authenticate based on their role (Admin/Staff or Customer) through separate login screens
+  </Step>
+  
+  <Step title="Role-Based Navigation">
+    After authentication, users are routed to their role-specific module:
+    
+    - **Admin**: Full system management (packages, customers, drivers, analytics)
+    - **Customer**: Request shipments, track deliveries, view history
+    - **Driver**: View assigned deliveries, update status, manage routes
+  </Step>
+</Steps>
+
+## API Integration
+
+The application communicates with a RESTful API backend for all data operations:
+
+```dart
+// lib/core/api/api_client.dart:8-20
+ApiClient() {
+  _dio = Dio(
+    BaseOptions(
+      baseUrl: 'https://api.eisegmi.facturador.es',
+      validateStatus: (status) {
+        return status != null && status >= 200 && status < 300;
+      },
+      connectTimeout: const Duration(seconds: 20),
+      receiveTimeout: const Duration(seconds: 20),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    ),
+  );
+}
+```
+
+### Authentication Flow
+
+The API client automatically handles JWT token authentication:
+
+- Tokens are stored securely in SharedPreferences
+- Automatic token injection via Dio interceptor
+- Automatic logout on 401 (Unauthorized) responses
+
+<Note>
+  The API client includes interceptors for automatic token management and error handling, ensuring seamless authentication across all API calls.
+</Note>
+
+## User Roles
+
+### Admin/Staff
+
+Administrators have full access to:
+
+- Dashboard with analytics and metrics
+- Customer management (create, edit, view)
+- Package/shipment management
+- Driver assignment and tracking
+- Branch/location management
+- System configuration
+- Report generation
+
+### Customer
+
+Customers can:
+
+- Register and manage their account
+- Request new shipments
+- Track active deliveries
+- View delivery history
+- Manage delivery addresses
+- View delivery receipts
+
+### Driver (Motorizado)
+
+Drivers have access to:
+
+- Assigned deliveries dashboard
+- Delivery status updates
+- Route information
+- Delivery history
+- Package details and recipient information
+
+## Key Dependencies
+
+The application leverages several key Flutter packages:
+
+| Package | Purpose |
+|---------|--------|
+| `dio` | HTTP client for API communication |
+| `provider` | State management |
+| `shared_preferences` | Local data persistence |
+| `image_picker` | Capture delivery photos |
+| `fl_chart` | Analytics and charts |
+| `pdf` & `printing` | Generate and print receipts |
+| `permission_handler` | Handle device permissions |
+| `intl` | Internationalization and date formatting |
+| `pinput` | OTP/PIN input for verification |
+
+<Warning>
+  The app requires several permissions for full functionality: camera access (for package photos), storage access (for documents), and internet connectivity.
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get the app running in minutes
+  </Card>
+  <Card title="Installation" icon="download" href="/installation">
+    Detailed setup instructions
+  </Card>
+</CardGroup>

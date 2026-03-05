@@ -1,0 +1,327 @@
+---
+title: 'System Settings APIs'
+description: 'Retrieve system configuration data for payment types, delivery types, shipping types, and pricing plans'
+---
+
+## Overview
+
+The system settings APIs provide configuration data used throughout the application, including payment methods, delivery options, shipping types, and pricing plans.
+
+<Tabs>
+  <Tab title="Payment Types">
+    ## Get Payment Types
+
+    <CodeGroup>
+    ```bash Request
+    GET /configuraciones/getTiposPago
+    ```
+
+    ```dart Implementation
+    // lib/services/configuraciones_service.dart:126
+    Future<List<TipoPago>> getTiposPago() async {
+      final response = await _apiClient.get(
+        ApiEndpoints.paymentTypes,
+      );
+
+      if (response.statusCode == 200) {
+        final body = response.data is String
+            ? jsonDecode(response.data)
+            : response.data as Map<String, dynamic>;
+
+        final List<dynamic> lista = body['data'] ?? [];
+
+        final tipos = lista
+            .map((e) => TipoPago.fromString(e as String))
+            .toList();
+
+        return tipos;
+      } else {
+        throw Exception('Error al obtener tipos de pago');
+      }
+    }
+    ```
+    </CodeGroup>
+
+    ### Response
+
+    Returns an array of available payment type strings.
+
+    <ResponseField name="data" type="array<string>">
+      List of payment type names
+    </ResponseField>
+
+    <ResponseExample>
+    ```json Response
+    {
+      "data": [
+        "Efectivo",
+        "Tarjeta de Crédito",
+        "Tarjeta de Débito",
+        "Transferencia Bancaria",
+        "Yape",
+        "Plin"
+      ]
+    }
+    ```
+    </ResponseExample>
+
+    <Note>
+      Source: `lib/models/tipoPago.dart:8` - Payment types are returned as strings and converted to TipoPago objects.
+    </Note>
+  </Tab>
+
+  <Tab title="Shipping Types">
+    ## Get Shipping Types
+
+    <CodeGroup>
+    ```bash Request
+    GET /configuraciones/getTiposEnvio
+    ```
+
+    ```dart Implementation
+    // lib/services/configuraciones_service.dart:166
+    Future<List<TipoEnvio>> getTipoEnvio() async {
+      final response = await _apiClient.get(
+        ApiEndpoints.shippingTypes,
+      );
+
+      if (response.statusCode == 200) {
+        final body = response.data is String
+            ? jsonDecode(response.data)
+            : response.data as Map<String, dynamic>;
+
+        final List<dynamic> lista = body['data'] ?? [];
+
+        final tipos = lista
+            .map((e) => TipoEnvio.fromString(e as String))
+            .toList();
+
+        return tipos;
+      } else {
+        throw Exception('Error al obtener tipos de pago');
+      }
+    }
+    ```
+    </CodeGroup>
+
+    ### Response
+
+    Returns an array of available shipping type strings.
+
+    <ResponseField name="data" type="array<string>">
+      List of shipping type names
+    </ResponseField>
+
+    <ResponseExample>
+    ```json Response
+    {
+      "data": [
+        "Estándar",
+        "Express",
+        "Terrestre",
+        "Aéreo"
+      ]
+    }
+    ```
+    </ResponseExample>
+
+    <Note>
+      Source: `lib/models/tipoEnvio.dart:8` - Shipping types are returned as strings and converted to TipoEnvio objects.
+    </Note>
+  </Tab>
+
+  <Tab title="Delivery Types">
+    ## Get Delivery Types
+
+    <CodeGroup>
+    ```bash Request
+    GET /configuraciones/getTiposEntrega
+    ```
+
+    ```dart Implementation
+    // lib/services/configuraciones_service.dart:188
+    Future<List<TipoEntrega>> getTipoEntrega() async {
+      final response = await _apiClient.get(
+        ApiEndpoints.deliveyTypes,
+      );
+
+      if (response.statusCode == 200) {
+        final body = response.data is String
+            ? jsonDecode(response.data)
+            : response.data as Map<String, dynamic>;
+
+        final List<dynamic> lista = body['data'] ?? [];
+
+        final tipos = lista
+            .map((e) => TipoEntrega.fromString(e as String))
+            .toList();
+
+        return tipos;
+      } else {
+        throw Exception('Error al obtener tipos de pago');
+      }
+    }
+    ```
+    </CodeGroup>
+
+    ### Response
+
+    Returns an array of available delivery type strings.
+
+    <ResponseField name="data" type="array<string>">
+      List of delivery type labels
+    </ResponseField>
+
+    <ResponseExample>
+    ```json Response
+    {
+      "data": [
+        "Agencia - Domicilio",
+        "Domicilio - Agencia",
+        "Agencia - Agencia",
+        "Domicilio - Domicilio"
+      ]
+    }
+    ```
+    </ResponseExample>
+
+    ### Delivery Type Values
+
+    Each delivery type has associated properties:
+
+    | Label | Value | Requires Sender Address | Requires Recipient Address |
+    |-------|-------|-------------------------|---------------------------|
+    | Agencia - Domicilio | 1 | No | Yes |
+    | Domicilio - Agencia | 2 | Yes | No |
+    | Agencia - Agencia | 3 | No | No |
+    | Domicilio - Domicilio | 4 | Yes | Yes |
+
+    <Note>
+      Source: `lib/models/tipoEntrega.dart:56` - Delivery types include enum with labels, values, and address requirement flags.
+    </Note>
+  </Tab>
+
+  <Tab title="Plans">
+    ## Get Plans
+
+    <CodeGroup>
+    ```bash Request
+    GET /configuraciones/getPlanes
+    ```
+
+    ```dart Implementation
+    // lib/services/configuraciones_service.dart:148
+    Future<List<Plan>> getPlanes() async {
+      final response = await _apiClient.get(
+        ApiEndpoints.planes,
+      );
+
+      if (response.statusCode == 200) {
+        final body = response.data is String
+            ? jsonDecode(response.data)
+            : response.data as Map<String, dynamic>;
+
+        final List<dynamic> data = body['data'] ?? [];
+
+        return data.map((e) => Plan.fromJson(e)).toList();
+      } else {
+        throw Exception('Error al obtener planes');
+      }
+    }
+    ```
+    </CodeGroup>
+
+    ### Response
+
+    Returns an array of pricing plan objects with tariff details.
+
+    <ResponseField name="data" type="array">
+      <Expandable title="Plan Object">
+        <ResponseField name="id" type="integer" required>
+          Unique identifier for the plan
+        </ResponseField>
+        <ResponseField name="nombre" type="string" required>
+          Plan name
+        </ResponseField>
+        <ResponseField name="tarifa_base" type="string" required>
+          Base tariff amount
+        </ResponseField>
+        <ResponseField name="peso_base" type="integer" required>
+          Base weight in kilograms included in the tariff
+        </ResponseField>
+        <ResponseField name="precio_exceso" type="string" required>
+          Price per kilogram for excess weight
+        </ResponseField>
+        <ResponseField name="precio_sobre" type="string" required>
+          Price for envelope/small package
+        </ResponseField>
+        <ResponseField name="estado" type="integer" required>
+          Plan status (1 = active, 0 = inactive)
+        </ResponseField>
+        <ResponseField name="fecha" type="string" required>
+          Creation or last update date
+        </ResponseField>
+        <ResponseField name="id_ubicacion" type="integer">
+          Associated location ID (optional)
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseExample>
+    ```json Response
+    {
+      "data": [
+        {
+          "id": 1,
+          "nombre": "Plan Básico",
+          "tarifa_base": "15.00",
+          "peso_base": 5,
+          "precio_exceso": "2.50",
+          "precio_sobre": "8.00",
+          "estado": 1,
+          "fecha": "2024-01-15",
+          "id_ubicacion": null
+        },
+        {
+          "id": 2,
+          "nombre": "Plan Premium",
+          "tarifa_base": "25.00",
+          "peso_base": 10,
+          "precio_exceso": "2.00",
+          "precio_sobre": "12.00",
+          "estado": 1,
+          "fecha": "2024-01-15",
+          "id_ubicacion": 5
+        }
+      ]
+    }
+    ```
+    </ResponseExample>
+
+    <Note>
+      Source: `lib/models/plan.dart:24` - Plan model includes pricing structure for weight-based tariffs.
+    </Note>
+  </Tab>
+</Tabs>
+
+## Usage Patterns
+
+### Configuration Dropdowns
+These endpoints are typically called once during app initialization and cached for use in dropdown menus and form selectors throughout the application.
+
+### Price Calculation
+The plans endpoint is particularly important for calculating shipment costs:
+- Base tariff applies up to the base weight
+- Excess weight is charged at the `precio_exceso` rate
+- Small packages/envelopes use the `precio_sobre` flat rate
+
+### Delivery Type Logic
+When selecting a delivery type, the application uses the address requirement flags to determine which address fields to show:
+```dart
+bool requiereDireccionRemitente = tipo.requiereDireccionRemitente;
+bool requiereDireccionDestinatario = tipo.requiereDireccionDestinatario;
+```
+
+<Info>
+  All settings endpoints are defined in `lib/core/api/api_endpoints.dart:54-61` and implemented in `lib/services/configuraciones_service.dart`.
+</Info>
